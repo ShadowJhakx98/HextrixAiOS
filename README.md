@@ -2,24 +2,24 @@
 
 HextrixAI is a cutting-edge artificial intelligence system that combines a powerful multimodal AI assistant with low-level OS integration capabilities. This project aims to create a comprehensive AI ecosystem that can interact with users through multiple modalities while leveraging deep system integration.
 
-## Current Development Status (v0.3.7-dev-v2)
+## Current Development Status (v0.3.8-dev)
 
-The project is currently in active development with key features implemented:
-- Stable OS foundation with comprehensive process management
-- Hardware Abstraction Layer (HAL) with polling-based device drivers
-- Memory protection with software validation
-- Hierarchical file system with full command interface
-- Cooperative multitasking with priority-based scheduling
-- Interactive shell with various system commands
-- Diagnostic tools for system analysis and debugging
-
-Key development focus areas:
-- Enhancing memory management system
-- Improving scheduler capabilities
-- Creating system call interface
-- Expanding driver model
+The project is currently in active development with a significantly improved user interface and stability:
+- ✅ Fully functional command-line shell with reliable keyboard input
+- ✅ Comprehensive Hardware Abstraction Layer (HAL) with device drivers
+- ✅ Memory protection with software validation
+- ✅ Hierarchical file system with full command interface
+- ✅ Cooperative multitasking with priority-based scheduling
+- ✅ Command history and tab completion
+- ✅ Enhanced printf functionality with proper text formatting
 
 ## Core Features
+
+### Command Line Shell
+- **User-Friendly Interface**: Reliable text-based interface with proper keyboard mapping
+- **Command Processing**: Support for a wide range of system commands
+- **History & Completion**: Command history navigation and tab completion
+- **Formatted Output**: Proper text formatting for readable output
 
 ### Hardware Abstraction Layer (HAL)
 - **Device Abstraction**: Uniform interface for hardware access
@@ -27,36 +27,60 @@ Key development focus areas:
 - **Extensible Architecture**: Easy addition of new device drivers
 - **Hardware Independence**: OS code isolated from hardware details
 
-### Stable OS Platform
-- **Process Management**: Complete PCB-based process management with state tracking
+### Process Management
+- **Process Control**: Complete PCB-based process management with state tracking
+- **Priority Scheduling**: Priority-based process scheduling with aging
 - **Memory Protection**: Region-based memory protection with access controls
-- **Hierarchical File System**: Directory structure with path handling and navigation
-- **Interactive Shell**: Command-line interface with file system operations
-- **Scalable Architecture**: Built for future integration with AI components
-- **Diagnostic Tools**: System analysis capabilities for development and debugging
+- **Task Management**: Process creation, termination, and priority adjustment
 
-### File System Features
-- Directory structure with navigation (cd, pwd)
-- File operations (create, read, write, delete)
-- Path handling (absolute and relative paths)
-- Metadata support (permissions, timestamps)
-- Standard directory hierarchy (/, /home, /bin, /etc)
+### File System
+- **Hierarchical Structure**: Directory structure with navigation (cd, pwd)
+- **File Operations**: File creation, reading, writing, and deletion
+- **Path Handling**: Support for absolute and relative paths
+- **Metadata**: File permissions and attribute management
+
+### Memory Management
+- **Protection Mechanisms**: Software-based memory protection
+- **Region Control**: Memory region management for access control
+- **Paging System**: Page-level protection through paging
+- **Permission Flags**: Read/write/execute permission enforcement
+
+## Command Set
+
+### File Management
+- `ls` - List files in directory
+- `cat` - Display file contents
+- `write` - Create/edit a file
+- `rm` - Delete a file
+- `pwd` - Show current directory
+- `cd` - Change current directory
+- `mkdir` - Create a directory
+
+### Process Management
+- `ps` - List running processes
+- `kill` - Terminate a process
+- `nice` - Change process priority
+- `sleep` - Sleep for milliseconds
+- `sched` - Display scheduler info
+
+### Memory Management
+- `meminfo` - Display memory usage
+- `memenable` - Enable memory protection
+- `memdisable` - Disable memory protection
+- `memcheck` - Check memory access validity
+- `memregions` - Display memory regions
 
 ### Shell Commands
-- **File Management**: ls, cat, write, rm
-- **Directory Operations**: cd, pwd, mkdir
-- **System Information**: meminfo, version, help
-- **Process Management**: ps, kill, nice, sleep
-- **Memory Management**: memenable, memdisable, memcheck, memregions
-- **Diagnostics**: diag
-- **UI Control**: clear, echo
+- `help` - Show available commands
+- `clear` - Clear the screen
+- `echo` - Display text
+- `version` - Show OS version
+- `history` - Show command history
+- `reboot` - Reboot the system
+- `exit` - Exit the shell
 
-### Future AI Capabilities (Planned)
-- **Text Processing**: Advanced language understanding using multiple LLM backends
-- **Image Processing**: Computer vision and image generation
-- **Speech Recognition**: Audio processing and transcription
-- **Emotional Intelligence**: Sentiment analysis and emotional context awareness
-- **Real-time Processing**: Support for video streams and multi-modal interactions
+### System Tools
+- `diag` - Run system diagnostics
 
 ## Getting Started
 
@@ -83,50 +107,57 @@ make iso
 
 # Run in QEMU
 qemu-system-i386 -cdrom hextrix.iso -m 512M
+```
 
-# Project Structure
-src/ - Source files
-  kernel.c - Main kernel entry point
-  terminal.c - Text display handling
-  memory.c - Memory management
-  kmalloc.c - Heap allocation
-  fs.c - File system implementation
-  shell.c - Interactive command shell
-  hal.c - Hardware Abstraction Layer core
-  hal_timer.c - Timer device implementation
-  hal_keyboard.c - Keyboard device implementation
-  string.c - String handling functions
-  stdio.c - Input/output utilities
-  boot.asm - Bootloader and initialization
-  process.c - Process management
-  scheduler.c - Task scheduling
+## Project Structure
 
-include/ - Header files
-  hal.h - Hardware Abstraction Layer interface
-  fs.h - File system definitions
-  shell.h - Shell interface
-  kmalloc.h - Memory allocation interface
-  process.h - Process management declarations
-  scheduler.h - Task scheduler interface
+```
+src/               - Source files
+  kernel.c         - Main kernel entry point
+  terminal.c       - Text display handling
+  memory.c         - Memory management
+  kmalloc.c        - Heap allocation
+  fs.c             - File system implementation
+  shell.c          - Interactive command shell
+  hal.c            - Hardware Abstraction Layer core
+  hal_timer.c      - Timer device implementation
+  hal_keyboard.c   - Keyboard device implementation
+  hal_storage.c    - Storage device implementation
+  string.c         - String handling functions
+  stdio.c          - Input/output utilities
+  boot.asm         - Bootloader and initialization
+  process.c        - Process management
+  scheduler.c      - Task scheduling
 
-# Development Roadmap
-Current Sprint (v0.3.7)
+include/           - Header files
+  hal.h            - Hardware Abstraction Layer interface
+  fs.h             - File system definitions
+  shell.h          - Shell interface
+  kmalloc.h        - Memory allocation interface
+  process.h        - Process management declarations
+  scheduler.h      - Task scheduler interface
+```
 
-✅ Implement Hardware Abstraction Layer (HAL)
-🟡 Enhance memory management
-🟡 Implement system call framework
-🔲 Create expanded driver model
+## Development Roadmap
 
-# Future Plans
+### Current Sprint (v0.3.8-dev)
+- ✅ Fix keyboard input and text formatting issues
+- ✅ Stabilize shell environment for usability
+- 🟡 Enhance file system functionality
+- 🟡 Improve memory management efficiency
+- 🔲 Implement system call framework
 
-Add network stack
-Implement graphical user interface
-Integrate AI components
+### Future Sprints
+- Add support for command piping and I/O redirection
+- Implement proper disk-based file system
+- Create expanded device driver support
+- Add networking capabilities
+- Develop graphical user interface
+- Integrate AI components
 
-# License
+## License
 This project is licensed under the proprietary license - see LICENSE.md for details.
 
-#Acknowledgments
-
-Various open-source OS development resources
-Contributors and researchers in OS development
+## Acknowledgments
+- Various open-source OS development resources
+- Contributors and researchers in OS development
