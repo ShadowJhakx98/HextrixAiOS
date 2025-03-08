@@ -7,7 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Hextrix OS - Changelog
 
-## Version 0.3.3 (Current)
+## Version 0.3.4 (Current)
+- Implemented basic memory protection mechanisms
+- Added memory region management for access control
+- Added page-level protection through paging mechanism
+- Implemented flags for read, write, and execute permissions
+- Added kernel/user memory separation
+- Implemented memory region tracking and validation
+- Added page fault handler framework (for future interrupt support)
+- Added shell commands for memory protection:
+  - memenable - Enable memory protection
+  - memdisable - Disable memory protection
+  - memcheck - Check if a memory access is valid
+  - memregions - Display memory region information
+- Added memory protection testing and validation in kernel initialization
+- Updated internal memory management to respect protection flags
+- Improved memory fault handling with recovery mechanisms
+- Disabled memory protection by default for system stability
+- Added safeguards to prevent page fault crashes
+- Enhanced page alignment verification
+
+## Version 0.3.3
 - Implemented enhanced process scheduler with proper process management
 - Added priority-based scheduling (LOW, NORMAL, HIGH, REALTIME priority levels)
 - Added process CPU usage and runtime tracking
