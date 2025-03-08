@@ -7,7 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Hextrix OS - Changelog
 
-## Version 0.3.1 (Current)
+## Version 0.3.2 (Current)
+- Implemented polling-based shell with command processing
+- Restored the file system functionality with in-memory storage
+- Added file system commands to the shell:
+  - ls - List files
+  - cat - Display file contents
+  - write - Create/edit files
+  - rm - Delete files
+- Updated help system with comprehensive command documentation
+- Improved shell input handling with better character processing
+- Enhanced system stability by eliminating interrupt-related crashes
+
+## Version 0.3.1
 - Refactored OS to use polling-based I/O instead of interrupts for improved stability
 - Implemented reliable timer polling mechanism
 - Added keyboard polling support
