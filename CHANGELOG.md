@@ -1,6 +1,3 @@
-### 2. CHANGELOG.md Update
-
-```markdown
 # Changelog
 
 All notable changes to the HextrixAI project will be documented in this file.
@@ -10,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Hextrix OS - Changelog
 
-## Version 0.3.7-dev-v2 (Current - In Progress)
+## Version 0.3.8-dev (Current - In Progress)
+- Fixed keyboard scancode mapping to correctly interpret user input
+- Fixed scheduler priority boosting to prevent infinite loop
+- Integrated terminal_printf improvements for proper string formatting
+- Fixed shell command display for proper help text rendering
+- Resolved linker errors related to missing function implementations
+- Successfully implemented complete shell input/output workflow
+- Enhanced shell UI with proper VGA text mode rendering
+- Ensured command history and tab completion functionality works properly
+- Overall system stability improvements for day-to-day usage
+
+## Version 0.3.7-dev-v2 (Previous)
 - Implemented Hardware Abstraction Layer (HAL) for device independence
 - Created uniform HAL interface for all hardware interactions
 - Implemented timer and keyboard device drivers on HAL
@@ -48,11 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Implemented flags for read, write, and execute permissions
 - Added kernel/user memory separation
 - Implemented memory region tracking and validation
-- Added shell commands for memory protection:
-  - memenable - Enable memory protection
-  - memdisable - Disable memory protection
-  - memcheck - Check if a memory access is valid
-  - memregions - Display memory region information
+- Added shell commands for memory protection
 - Added memory protection testing and validation
 - Updated internal memory management to respect protection flags
 - Eliminated page fault and interrupt handler dependencies
@@ -62,6 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Improved CPU state management to avoid crashes
 - Enhanced page alignment verification with strict checks
 - Simplified memory subsystem to avoid triggering hardware exceptions
+
+## Earlier versions
 
 ## Version 0.3.3
 - Implemented enhanced process scheduler with proper process management
