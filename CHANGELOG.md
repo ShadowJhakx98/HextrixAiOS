@@ -7,15 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Hextrix OS - Changelog
 
+# Changelog
+
+All notable changes to the HextrixAI project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+# Hextrix OS - Changelog
+
 ## Version 0.3.2 (Current)
-- Implemented polling-based shell with command processing
-- Restored the file system functionality with in-memory storage
-- Added file system commands to the shell:
-  - ls - List files
-  - cat - Display file contents
-  - write - Create/edit files
-  - rm - Delete files
-- Updated help system with comprehensive command documentation
+- Enhanced file system with hierarchical directory structure
+- Implemented path handling for both absolute and relative paths
+- Added support for tracking and changing current working directory
+- Created larger file size capacity (8KB per file)
+- Implemented file system metadata including permissions and timestamps
+- Added new commands for directory management:
+  - pwd - Display current working directory
+  - cd - Change directory
+  - mkdir - Create new directories
+  - ls - List directory contents with improved formatting
+- Created standard directories (/, /home, /bin, /etc)
+- Fixed bugs in command processing and file system operations
 - Improved shell input handling with better character processing
 - Enhanced system stability by eliminating interrupt-related crashes
 
