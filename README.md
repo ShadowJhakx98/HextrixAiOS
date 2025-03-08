@@ -2,10 +2,11 @@
 
 HextrixAI is a cutting-edge artificial intelligence system that combines a powerful multimodal AI assistant with low-level OS integration capabilities. This project aims to create a comprehensive AI ecosystem that can interact with users through multiple modalities while leveraging deep system integration.
 
-## Current Development Status (v0.3.6-dev)
+## Current Development Status (v0.3.7-dev-v2)
 
 The project is currently in active development with key features implemented:
 - Stable OS foundation with comprehensive process management
+- Hardware Abstraction Layer (HAL) with polling-based device drivers
 - Memory protection with software validation
 - Hierarchical file system with full command interface
 - Cooperative multitasking with priority-based scheduling
@@ -13,19 +14,24 @@ The project is currently in active development with key features implemented:
 - Diagnostic tools for system analysis and debugging
 
 Key development focus areas:
-- Implementing Hardware Abstraction Layer (HAL)
 - Enhancing memory management system
 - Improving scheduler capabilities
 - Creating system call interface
+- Expanding driver model
 
 ## Core Features
+
+### Hardware Abstraction Layer (HAL)
+- **Device Abstraction**: Uniform interface for hardware access
+- **Polling-Based Drivers**: Stable device interaction without interrupts
+- **Extensible Architecture**: Easy addition of new device drivers
+- **Hardware Independence**: OS code isolated from hardware details
 
 ### Stable OS Platform
 - **Process Management**: Complete PCB-based process management with state tracking
 - **Memory Protection**: Region-based memory protection with access controls
 - **Hierarchical File System**: Directory structure with path handling and navigation
 - **Interactive Shell**: Command-line interface with file system operations
-- **Polling-based I/O**: Stable input/output mechanism without interrupts
 - **Scalable Architecture**: Built for future integration with AI components
 - **Diagnostic Tools**: System analysis capabilities for development and debugging
 
@@ -77,52 +83,3 @@ make iso
 
 # Run in QEMU
 qemu-system-i386 -cdrom hextrix.iso -m 512M
-```
-
-## Project Structure
-
-```
-src/ - Source files
-  kernel.c - Main kernel entry point
-  terminal.c - Text display handling
-  memory.c - Memory management
-  kmalloc.c - Heap allocation
-  fs.c - File system implementation
-  shell.c - Interactive command shell
-  interrupts.c - Polling-based I/O implementation
-  string.c - String handling functions
-  stdio.c - Input/output utilities
-  boot.asm - Bootloader and initialization
-  process.c - Process management
-  scheduler.c - Task scheduling
-
-include/ - Header files
-  fs.h - File system definitions
-  shell.h - Shell interface
-  kmalloc.h - Memory allocation interface
-  interrupts.h - I/O interface declarations
-  process.h - Process management declarations
-  scheduler.h - Task scheduler interface
-```
-
-Development Roadmap
-Current Sprint (v0.3.6)
-
-Implement Hardware Abstraction Layer (HAL)
-Enhance process management
-Optimize memory management
-Implement system call framework
-
-Future Plans
-
-Add driver model
-Add network stack
-Implement graphical user interface
-Integrate AI components
-
-License
-This project is licensed under the proprietary license - see LICENSE.md for details.
-Acknowledgments
-
-Various open-source OS development resources
-Contributors and researchers in OS development
