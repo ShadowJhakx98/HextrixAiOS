@@ -7,25 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Hextrix OS - Changelog
 
-## Version 0.3.4 (Current)
+## Version 0.3.5 (Current - In Progress)
+- Added interrupt diagnostics tools for system analysis
+- Identified issues with interrupt system:
+  - All IRQs masked in PIC
+  - Interrupts disabled at CPU level (IF flag)
+- Implemented simplified diagnostic command (intdiag)
+- Prepared groundwork for proper interrupt implementation
+- Made system more stable with improved error handling
+- Created transition plan from polling to interrupt-driven I/O
+
+## Version 0.3.4
 - Implemented basic memory protection mechanisms
 - Added memory region management for access control
 - Added page-level protection through paging mechanism
 - Implemented flags for read, write, and execute permissions
 - Added kernel/user memory separation
 - Implemented memory region tracking and validation
-- Added page fault handler framework (for future interrupt support)
 - Added shell commands for memory protection:
   - memenable - Enable memory protection
   - memdisable - Disable memory protection
   - memcheck - Check if a memory access is valid
   - memregions - Display memory region information
-- Added memory protection testing and validation in kernel initialization
+- Added memory protection testing and validation
 - Updated internal memory management to respect protection flags
-- Improved memory fault handling with recovery mechanisms
+- Eliminated page fault and interrupt handler dependencies
+- Enhanced system stability with purely software-based protection
 - Disabled memory protection by default for system stability
-- Added safeguards to prevent page fault crashes
-- Enhanced page alignment verification
+- Added more extensive memory mappings for kernel code
+- Improved CPU state management to avoid crashes
+- Enhanced page alignment verification with strict checks
+- Simplified memory subsystem to avoid triggering hardware exceptions
 
 ## Version 0.3.3
 - Implemented enhanced process scheduler with proper process management
@@ -102,67 +114,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added ISO creation capability with GRUB bootloader
 - Set up basic project structure with header files and source files organization
 - Created initial README file
-
-## Roadmap (Upcoming Features)
-- Implement memory protection mechanisms
-- Add improved interrupt handling system foundation
-- Implement preemptive multitasking
-- Add process isolation (user/kernel space separation)
-- Implement virtual memory and paging
-- Add memory protection rings
-- Optimize kernel heap
-- Implement process communication mechanisms
-- Add driver model improvements
-- Implement system extensions framework
-
-# HextrixAI - Changelog
-
-## [Unreleased]
-
-### Added
-- Initial project structure
-- Basic AI assistant functionality
-- Core OS kernel components
-- Memory management system
-- Emotional state tracking
-- Multimodal capabilities (text, vision, speech)
-
-## [0.1.0] - 2025-03-07
-
-### Added
-- Initial repository setup
-- Base AI system architecture in app.py
-- Core OS components:
-  - Memory management (memory.c, kmalloc.c)
-  - Terminal interface (terminal.c)
-  - Interrupt handling (interrupts.c)
-  - Basic scheduler (scheduler.c)
-- Build system with makefile and linker configuration
-- Integration with key AI models:
-  - LLaVA for vision understanding
-  - Llama 3.3 for text processing
-  - Gemini integration for multimodal tasks
-  - Whisper for speech recognition
-- Initial Google API integrations
-- Cloudflare AI inference capabilities
-- Emotion detection and emotional state management
-- Basic self-awareness modules
-- Memory persistence using Google Drive
-
-### Changed
-- N/A (initial release)
-
-### Fixed
-- N/A (initial release)
-
-## Future Releases
-
-Upcoming releases will focus on:
-- Advanced multimodal capabilities
-- Enhanced OS integration
-- Improved neural memory systems
-- Ethical and control mechanism implementation
-- Hardware integration with Jetson Thor
-- ZEISS smart glass capabilities
-- Windows compatibility layer
-- Specialized support features for healthcare
