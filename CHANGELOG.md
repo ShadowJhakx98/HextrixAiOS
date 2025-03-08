@@ -16,7 +16,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Hextrix OS - Changelog
 
-## Version 0.3.2 (Current)
+## Version 0.3.3 (Current)
+- Implemented enhanced process scheduler with proper process management
+- Added priority-based scheduling (LOW, NORMAL, HIGH, REALTIME priority levels)
+- Added process CPU usage and runtime tracking
+- Added support for process states (READY, RUNNING, BLOCKED, TERMINATED, SLEEPING)
+- Implemented parent-child process relationships
+- Fixed terminal scrolling to properly handle screen overflow
+- Added process command extensions:
+  - ps - List running processes with detailed stats (CPU usage, priority, state)
+  - nice - Change process priority at runtime
+  - sleep - Pause execution for a specified time
+- Enhanced process scheduling algorithm with priority-based execution
+- Added improved process statistics in process list display
+- Fixed several system stability issues
+
+## Version 0.3.2 
 - Enhanced file system with hierarchical directory structure
 - Implemented path handling for both absolute and relative paths
 - Added support for tracking and changing current working directory
