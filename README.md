@@ -83,3 +83,50 @@ make iso
 
 # Run in QEMU
 qemu-system-i386 -cdrom hextrix.iso -m 512M
+
+# Project Structure
+src/ - Source files
+  kernel.c - Main kernel entry point
+  terminal.c - Text display handling
+  memory.c - Memory management
+  kmalloc.c - Heap allocation
+  fs.c - File system implementation
+  shell.c - Interactive command shell
+  hal.c - Hardware Abstraction Layer core
+  hal_timer.c - Timer device implementation
+  hal_keyboard.c - Keyboard device implementation
+  string.c - String handling functions
+  stdio.c - Input/output utilities
+  boot.asm - Bootloader and initialization
+  process.c - Process management
+  scheduler.c - Task scheduling
+
+include/ - Header files
+  hal.h - Hardware Abstraction Layer interface
+  fs.h - File system definitions
+  shell.h - Shell interface
+  kmalloc.h - Memory allocation interface
+  process.h - Process management declarations
+  scheduler.h - Task scheduler interface
+
+# Development Roadmap
+Current Sprint (v0.3.7)
+
+✅ Implement Hardware Abstraction Layer (HAL)
+🟡 Enhance memory management
+🟡 Implement system call framework
+🔲 Create expanded driver model
+
+# Future Plans
+
+Add network stack
+Implement graphical user interface
+Integrate AI components
+
+# License
+This project is licensed under the proprietary license - see LICENSE.md for details.
+
+#Acknowledgments
+
+Various open-source OS development resources
+Contributors and researchers in OS development
