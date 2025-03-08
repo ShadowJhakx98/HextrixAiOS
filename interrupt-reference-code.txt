@@ -1,0 +1,163 @@
+// PIC initialization sequence (basic)
+static void init_pic(void) {
+    // ICW1: initialize + ICW4 needed
+    outb(0x20, 0x11);  // Master PIC
+    outb(0xA0, 0x11);  // Slave PIC
+    
+    // ICW2: Set IRQ base offsets
+    outb(0x21, 0x20);  // Master: IRQ0-7 -> INT 0x20-0x27
+    outb(0xA1, 0x28);  // Slave: IRQ8-15 -> INT 0x28-0x2F
+    
+    // ICW3: Tell PICs about each other
+    outb(0x21, 0x04);  // Master: Slave on IRQ2
+    outb(0xA1, 0x02);  // Slave: Cascade identity
+    
+    // ICW4: 8086 mode
+    outb(0x21, 0x01);
+    outb(0xA1, 0x01);
+    
+    // Mask all interrupts except timer
+    outb(0x21, 0xFE);  // 1111 1110 - Only IRQ0 enabled
+    outb(0xA1, 0xFF);  // All slave interrupts masked
+}
+
+// PIT initialization (1000Hz rate) 
+static void init_pit_1000hz(void) {
+    // Configure PIT channel 0 for approx. 1000Hz (1ms) rate
+    uint16_t divisor = 1193;  // 1.193182 MHz / 1000 ≈ 1193
+    
+    // Mode 2 (Rate Generator), Channel 0, lobyte/hibyte
+    outb(0x43, 0x34);
+    
+    // Set divisor (low byte then high byte)
+    outb(0x40, divisor & 0xFF);
+    outb(0x40, (divisor >> 8) & 0xFF);
+}
+
+// PIT initialization (safe defaults)
+static void init_pit_safe(void) {
+    // Mode 0 (Interrupt on Terminal Count), Channel 0, lobyte/hibyte
+    outb(0x43, 0x30);
+    
+    // Small delay
+    for (volatile int i = 0; i < 1000; i++);
+    
+    // Set maximum divisor (0 = 65536)
+    outb(0x40, 0x00);
+    for (volatile int i = 0; i < 1000; i++);
+    outb(0x40, 0x00);
+    
+    // Delay to ensure settings are applied
+    for (volatile int i = 0; i < 10000; i++);
+}
+
+// IDT entry setup
+static void idt_set_entry(uint8_t num, uint32_t handler, uint16_t selector, uint8_t flags) {
+    idt[num].base_lo = handler & 0xFFFF;
+    idt[num].base_hi = (handler >> 16) & 0xFFFF;
+    idt[num].sel = selector;
+    idt[num].always0 = 0;
+    idt[num].flags = flags;
+}
+
+// Timer interrupt handler (assembly) - tested but not confirmed working
+/*
+test_timer_stub:
+    pushad              ; Save all registers
+    pushfd              ; Save flags
+    
+    call timer_handler  ; Call C handler
+    
+    ; Send EOI directly from assembly 
+    mov al, 0x20
+    out 0x20, al
+    
+    popfd               ; Restore flags
+    popad               ; Restore registers
+    iret                ; Return from interrupt
+*/
+
+// Timer interrupt handler (C) - minimal
+void timer_handler(void) {
+    timer_ticks++;
+    
+    // No EOI here - it's in assembly
+}
+
+// Check if interrupts are enabled
+int are_interrupts_enabled(void) {
+    uint32_t flags;
+    asm volatile("pushf\n\t"
+                 "pop %0"
+                 : "=r"(flags));
+    return flags & 0x200; // Check IF (Interrupt Flag) bit
+}
+
+// Timer polling function (fallback)
+void timer_poll(void) {
+    // Only poll periodically to reduce overhead
+    static int counter = 0;
+    if (++counter < 1000) return;
+    counter = 0;
+    
+    // Read timer value from PIT channel 0
+    static uint32_t last_time = 0;
+    uint32_t current_time = 0;
+    
+    outb(0x43, 0x00);  // Command to read counter
+    current_time = inb(0x40);  // Low byte
+    current_time |= inb(0x40) << 8;  // High byte
+    
+    // Timer counts down - detect change
+    if (current_time != last_time) {
+        last_time = current_time;
+        timer_ticks++;
+    }
+}
+
+// Hardware abstraction approach for future implementation
+// This is a conceptual design for future development
+
+// Generic timer interface
+typedef struct {
+    void (*init)(void);              // Initialize timer
+    void (*set_frequency)(uint32_t); // Set timer frequency
+    uint32_t (*get_ticks)(void);     // Get current tick count
+    void (*register_callback)(void (*callback)(void)); // Register tick callback
+    void (*enable)(void);            // Enable timer
+    void (*disable)(void);           // Disable timer
+} timer_device_t;
+
+// Timer implementation for polling mode
+timer_device_t polling_timer = {
+    .init = polling_timer_init,
+    .set_frequency = polling_timer_set_frequency,
+    .get_ticks = polling_timer_get_ticks,
+    .register_callback = polling_timer_register_callback,
+    .enable = polling_timer_enable,
+    .disable = polling_timer_disable
+};
+
+// Timer implementation for interrupt mode
+timer_device_t interrupt_timer = {
+    .init = interrupt_timer_init,
+    .set_frequency = interrupt_timer_set_frequency,
+    .get_ticks = interrupt_timer_get_ticks,
+    .register_callback = interrupt_timer_register_callback,
+    .enable = interrupt_timer_enable,
+    .disable = interrupt_timer_disable
+};
+
+// Use a single interface regardless of implementation
+timer_device_t* system_timer = &polling_timer; // Default to polling
+
+// System could try interrupts and fallback if needed:
+void timer_system_init(void) {
+    if (try_interrupt_timer()) {
+        system_timer = &interrupt_timer;
+    } else {
+        system_timer = &polling_timer;
+    }
+    
+    system_timer->init();
+}
