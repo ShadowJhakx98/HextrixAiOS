@@ -1,10 +1,16 @@
-// src/fs_enhanced.c
+// src/fs.c
 #include "fs.h"
 #include "hal.h"
 #include "kmalloc.h"
 #include "terminal.h"
 #include "stdio.h"
 #include "string.h"
+
+// File system node array
+fs_node_t fs_nodes[FS_MAX_FILES];
+
+// Current working directory
+static char current_directory[FS_MAX_PATH] = "/";
 
 // File system buffer cache
 #define FS_CACHE_SIZE 32      // Number of cache blocks
@@ -44,12 +50,19 @@ static uint32_t fs_cache_timer = 0;  // Simple timer for LRU
 static int fs_flush_cache_block(int block_index);
 static int fs_flush_all_cache(void);
 
-// Initialize the enhanced file system
-void fs_enhanced_init(void) {
-    terminal_writestring("Initializing enhanced file system\n");
+// Initialize file system
+void fs_init(void) {
+    // Clear all nodes
+    for (int i = 0; i < FS_MAX_FILES; i++) {
+        fs_nodes[i].in_use = 0;
+    }
     
-    // Initialize in-memory file system (existing code)
-    fs_init();
+    // Create root directory
+    fs_nodes[0].in_use = 1;
+    fs_nodes[0].type = FS_TYPE_DIRECTORY;
+    strcpy(fs_nodes[0].name, "/");
+    strcpy(fs_nodes[0].path, "/");
+    fs_nodes[0].parent_index = -1;
     
     // Initialize cache
     for (int i = 0; i < FS_CACHE_SIZE; i++) {
@@ -69,7 +82,101 @@ void fs_enhanced_init(void) {
     fs_stats.file_writes = 0;
     fs_stats.dir_operations = 0;
     
-    terminal_writestring("Enhanced file system initialized with buffer cache\n");
+    terminal_writestring("File system initialized\n");
+}
+
+// Get current working directory
+const char* fs_getcwd(void) {
+    return current_directory;
+}
+
+// List files in a directory
+void fs_list(const char* path) {
+    terminal_writestring("Directory listing (stub):\n");
+    terminal_writestring("  .  (directory)\n");
+    terminal_writestring("  .. (directory)\n");
+}
+
+// Create a file
+int fs_create(const char* path, int type) {
+    // Simple stub - in a real FS, this would create a file
+    fs_stats.file_opens++;
+    return 0;  // Success
+}
+
+// Read from a file
+int fs_read(const char* path, char* buffer, size_t size) {
+    // Simple stub - in a real FS, this would read file data
+    fs_stats.file_reads++;
+    strcpy(buffer, "File contents (stub)");
+    return strlen(buffer);
+}
+
+// Write to a file
+int fs_write(const char* path, const char* data, size_t size) {
+    // Simple stub - in a real FS, this would write data to file
+    fs_stats.file_writes++;
+    return size;  // Success, wrote all bytes
+}
+
+// Delete a file
+int fs_delete(const char* path) {
+    // Simple stub - in a real FS, this would delete a file
+    fs_stats.file_closes++;
+    return 0;  // Success
+}
+
+// Get file size
+int fs_size(const char* path) {
+    // Simple stub - in a real FS, this would return actual size
+    return 100;  // Return dummy size
+}
+
+// Create a directory
+int fs_mkdir(const char* path) {
+    // Simple stub - in a real FS, this would create a directory
+    fs_stats.dir_operations++;
+    return 0;  // Success
+}
+
+// Change current directory
+int fs_chdir(const char* path) {
+    // Simple stub - in a real FS, this would change directory
+    strcpy(current_directory, path);
+    return 0;  // Success
+}
+
+// Get file information by index
+int fs_stat_by_index(int index, fs_node_t* info) {
+    if (index < 0 || index >= FS_MAX_FILES) {
+        return -1;
+    }
+    
+    *info = fs_nodes[index];
+    return 0;
+}
+
+// Update file node
+int fs_update_node(int index, fs_node_t* info) {
+    if (index < 0 || index >= FS_MAX_FILES) {
+        return -1;
+    }
+    
+    fs_nodes[index] = *info;
+    return 0;
+}
+
+// Get file information
+int fs_stat(const char* path, fs_node_t* info) {
+    // Simple stub - find the node with matching path
+    for (int i = 0; i < FS_MAX_FILES; i++) {
+        if (fs_nodes[i].in_use && strcmp(fs_nodes[i].path, path) == 0) {
+            *info = fs_nodes[i];
+            return 0;
+        }
+    }
+    
+    return -1; // Not found
 }
 
 // Find a cache block for the given sector
@@ -228,57 +335,6 @@ static int fs_cached_write_sector(uint32_t sector, const void* buffer) {
 // Synchronize cache with disk (flush all dirty blocks)
 int fs_sync(void) {
     return fs_flush_all_cache();
-}
-
-// Enhanced file system operations that use the cache
-
-// Read from a file with caching
-int fs_enhanced_read(const char* path, void* buffer, size_t size) {
-    // Use existing fs_read for now, but increment stats
-    fs_stats.file_reads++;
-    return fs_read(path, buffer, size);
-}
-
-// Write to a file with caching
-int fs_enhanced_write(const char* path, const void* data, size_t size) {
-    // Use existing fs_write for now, but increment stats
-    fs_stats.file_writes++;
-    return fs_write(path, data, size);
-}
-
-// Create a file with caching
-int fs_enhanced_create(const char* path, int type) {
-    // Use existing fs_create for now, but increment stats
-    fs_stats.file_opens++;
-    return fs_create(path, type);
-}
-
-// Delete a file with caching
-int fs_enhanced_delete(const char* path) {
-    // Use existing fs_delete for now, but increment stats
-    fs_stats.file_closes++;
-    return fs_delete(path);
-}
-
-// Create a directory with caching
-int fs_enhanced_mkdir(const char* path) {
-    // Use existing fs_mkdir for now, but increment stats
-    fs_stats.dir_operations++;
-    return fs_mkdir(path);
-}
-
-// Get file system statistics
-void fs_get_stats(uint32_t* hits, uint32_t* misses, uint32_t* flushes,
-                 uint32_t* opens, uint32_t* closes, uint32_t* reads,
-                 uint32_t* writes, uint32_t* dirs) {
-    if (hits) *hits = fs_stats.cache_hits;
-    if (misses) *misses = fs_stats.cache_misses;
-    if (flushes) *flushes = fs_stats.cache_flushes;
-    if (opens) *opens = fs_stats.file_opens;
-    if (closes) *closes = fs_stats.file_closes;
-    if (reads) *reads = fs_stats.file_reads;
-    if (writes) *writes = fs_stats.file_writes;
-    if (dirs) *dirs = fs_stats.dir_operations;
 }
 
 // Display file system cache information
@@ -446,8 +502,6 @@ int fs_repair(void) {
             
             int has_dot = 0;
             int has_dotdot = 0;
-            int dot_index = -1;
-            int dotdot_index = -1;
             
             // Check all files to see if they have this directory as parent
             for (int j = 0; j < FS_MAX_FILES; j++) {
@@ -458,10 +512,8 @@ int fs_repair(void) {
                     
                     if (strcmp(child.name, ".") == 0) {
                         has_dot = 1;
-                        dot_index = j;
                     } else if (strcmp(child.name, "..") == 0) {
                         has_dotdot = 1;
-                        dotdot_index = j;
                     }
                 }
             }
@@ -549,130 +601,4 @@ int fs_repair(void) {
     }
     
     return repairs;
-}
-
-// Function to get a file node by index (adding to fs.h for use here)
-int fs_stat_by_index(int index, fs_node_t* info) {
-    // Simple implementation assuming the in-memory FS has an array of nodes
-    extern fs_node_t fs_nodes[FS_MAX_FILES];
-    
-    if (index < 0 || index >= FS_MAX_FILES) {
-        return -1;
-    }
-    
-    // Copy node info
-    memcpy(info, &fs_nodes[index], sizeof(fs_node_t));
-    return 0;
-}
-
-// Function to update a file node by index (adding to fs.h for use here)
-int fs_update_node(int index, fs_node_t* info) {
-    // Simple implementation assuming the in-memory FS has an array of nodes
-    extern fs_node_t fs_nodes[FS_MAX_FILES];
-    
-    if (index < 0 || index >= FS_MAX_FILES) {
-        return -1;
-    }
-    
-    // Update node info
-    memcpy(&fs_nodes[index], info, sizeof(fs_node_t));
-    return 0;
-}
-// File system node array
-fs_node_t fs_nodes[FS_MAX_FILES];
-
-// Current working directory
-static char current_directory[FS_MAX_PATH] = "/";
-
-// Initialize file system
-void fs_init(void) {
-    // Clear all nodes
-    for (int i = 0; i < FS_MAX_FILES; i++) {
-        fs_nodes[i].in_use = 0;
-    }
-    
-    // Create root directory
-    fs_nodes[0].in_use = 1;
-    fs_nodes[0].type = FS_TYPE_DIRECTORY;
-    strcpy(fs_nodes[0].name, "/");
-    strcpy(fs_nodes[0].path, "/");
-    fs_nodes[0].parent_index = -1;
-    
-    terminal_writestring("File system initialized\n");
-}
-
-// Get current working directory
-const char* fs_getcwd(void) {
-    return current_directory;
-}
-
-// List files in a directory
-void fs_list(const char* path) {
-    terminal_writestring("Directory listing (stub):\n");
-    terminal_writestring("  .  (directory)\n");
-    terminal_writestring("  .. (directory)\n");
-}
-
-// Create a file
-int fs_create(const char* path, int type) {
-    // Simple stub - in a real FS, this would create a file
-    return 0;  // Success
-}
-
-// Read from a file
-int fs_read(const char* path, char* buffer, size_t size) {
-    // Simple stub - in a real FS, this would read file data
-    strcpy(buffer, "File contents (stub)");
-    return strlen(buffer);
-}
-
-// Write to a file
-int fs_write(const char* path, const char* data, size_t size) {
-    // Simple stub - in a real FS, this would write data to file
-    return size;  // Success, wrote all bytes
-}
-
-// Delete a file
-int fs_delete(const char* path) {
-    // Simple stub - in a real FS, this would delete a file
-    return 0;  // Success
-}
-
-// Get file size
-int fs_size(const char* path) {
-    // Simple stub - in a real FS, this would return actual size
-    return 100;  // Return dummy size
-}
-
-// Create a directory
-int fs_mkdir(const char* path) {
-    // Simple stub - in a real FS, this would create a directory
-    return 0;  // Success
-}
-
-// Change current directory
-int fs_chdir(const char* path) {
-    // Simple stub - in a real FS, this would change directory
-    strcpy(current_directory, path);
-    return 0;  // Success
-}
-
-// Get file information by index
-int fs_stat_by_index(int index, fs_node_t* info) {
-    if (index < 0 || index >= FS_MAX_FILES) {
-        return -1;
-    }
-    
-    *info = fs_nodes[index];
-    return 0;
-}
-
-// Update file node
-int fs_update_node(int index, fs_node_t* info) {
-    if (index < 0 || index >= FS_MAX_FILES) {
-        return -1;
-    }
-    
-    fs_nodes[index] = *info;
-    return 0;
 }

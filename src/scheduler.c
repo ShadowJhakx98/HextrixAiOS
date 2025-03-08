@@ -20,6 +20,7 @@
 // Process arrays for each priority queue
 static process_t* process_queues[MAX_PRIORITY_QUEUES][MAX_PROCESSES] = {0};
 static uint32_t queue_counts[MAX_PRIORITY_QUEUES] = {0};
+static int boost_in_progress = 0; // Add this at the top of scheduler.c, with other static variables
 
 // Current scheduler configuration
 static struct {
@@ -85,52 +86,24 @@ static uint32_t get_time_slice(process_t* process) {
     return slice;
 }
 
-// Priority boosting to prevent starvation
+// Find the boost_priorities function and modify it:
 static void boost_priorities(void) {
-    terminal_writestring("Boosting process priorities\n");
-    
-    // Move all processes up one queue level
-    for (int q = MAX_PRIORITY_QUEUES - 1; q > 0; q--) {
-        for (uint32_t i = 0; i < queue_counts[q]; i++) {
-            process_t* proc = process_queues[q][i];
-            if (proc && proc->state == PROCESS_STATE_READY) {
-                // Boost priority by one level
-                uint8_t new_priority;
-                switch (proc->priority) {
-                    case PROCESS_PRIORITY_LOW:
-                        new_priority = PROCESS_PRIORITY_NORMAL;
-                        break;
-                    case PROCESS_PRIORITY_NORMAL:
-                        new_priority = PROCESS_PRIORITY_HIGH;
-                        break;
-                    default:
-                        new_priority = proc->priority;
-                        break;
-                }
-                
-                // Update process priority
-                process_set_priority(proc->pid, new_priority);
-                
-                // Move to higher queue
-                int new_queue = priority_to_queue(new_priority);
-                
-                // Remove from current queue
-                for (uint32_t j = i; j < queue_counts[q] - 1; j++) {
-                    process_queues[q][j] = process_queues[q][j + 1];
-                }
-                queue_counts[q]--;
-                
-                // Add to new queue
-                process_queues[new_queue][queue_counts[new_queue]++] = proc;
-                
-                // Adjust index since we removed an item
-                i--;
-            }
-        }
+    // Prevent re-entrancy
+    if (boost_in_progress) {
+        return;
     }
+    boost_in_progress = 1;
     
-    // Reset boost countdown
+    // Remove or comment this line to stop the spam
+    // terminal_writestring("Boosting process priorities\n");
+    
+    // The rest of your boost_priorities function...
+    
+    // Make sure to reset the countdown here too for safety
     scheduler_config.boost_countdown = scheduler_config.boost_interval;
+    
+    // Reset the in-progress flag
+    boost_in_progress = 0;
 }
 
 // Add process to appropriate queue
@@ -352,8 +325,11 @@ void scheduler_run_next(void) {
     }
 }
 
-// Initialize the enhanced scheduler
-void scheduler_enhanced_init(void) {
+// In scheduler.c:
+// Find the function defined as:
+// void scheduler_enhanced_init(void) {
+// and rename it to:
+void scheduler_init(void) {
     terminal_writestring("Initializing enhanced scheduler\n");
     
     // Clear process queues
@@ -368,8 +344,9 @@ void scheduler_enhanced_init(void) {
     scheduler_config.scheduler_type = SCHEDULER_TYPE_MULTILEVEL;
     scheduler_config.time_slice_base = 10;       // 10 ms base
     scheduler_config.time_slice_factor = 2;      // Double for each priority level
-    scheduler_config.boost_interval = 1000;      // Every 1000 ticks (about 10 seconds)
-    scheduler_config.boost_countdown = 1000;
+    // (Make sure these values are set correctly in your init function)
+    scheduler_config.boost_interval = 1000;  // Make sure this is not zero
+    scheduler_config.boost_countdown = 1000; // Make sure this matches interval initially
     scheduler_config.preemption_enabled = 1;     // Enable preemption
     scheduler_config.priority_aging = 1;         // Enable aging to prevent starvation
     
@@ -394,14 +371,29 @@ void scheduler_enhanced_init(void) {
     terminal_writestring("Enhanced scheduler initialized with multilevel feedback queues\n");
 }
 
-// Updated timer tick handler
+// If you need compatibility with any code that calls scheduler_enhanced_init,
+// add this function:
+void scheduler_enhanced_init(void) {
+    // Just call the main init function
+    scheduler_init();
+}
+
+// Fix 2: Update the timer tick handler
 void scheduler_timer_tick(void) {
     // Update statistics
     scheduler_stats.total_runtime++;
     
-    // Decrement priority boost countdown
-    if (scheduler_config.priority_aging) {
-        if (--scheduler_config.boost_countdown == 0) {
+    // Safe decrement of priority boost countdown
+    if (scheduler_config.priority_aging && 
+        scheduler_config.boost_interval > 0) {
+        
+        // Decrement first, then check
+        scheduler_config.boost_countdown--;
+        
+        // If we hit zero, boost priorities
+        if (scheduler_config.boost_countdown <= 0) {
+            // Reset countdown before calling boost (safety first)
+            scheduler_config.boost_countdown = scheduler_config.boost_interval;
             boost_priorities();
         }
     }

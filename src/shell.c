@@ -427,46 +427,74 @@ void shell_handle_key(int scancode) {
     // Convert scancode to key code
     int key = 0;
     
-    // Simple conversion for printable characters
-    if (scancode >= 2 && scancode <= 13) {
-        // Digits 1-9, 0, -, =
-        if (scancode <= 11) {
-            key = '0' + (scancode - 2 + 1) % 10;
-        } else if (scancode == 12) {
-            key = '-';
-        } else {
-            key = '=';
-        }
-    } else if (scancode >= 16 && scancode <= 27) {
-        // Letters Q-P
-        key = 'q' + (scancode - 16);
-    } else if (scancode >= 30 && scancode <= 40) {
-        // Letters A-L
-        key = 'a' + (scancode - 30);
-    } else if (scancode >= 44 && scancode <= 53) {
-        // Letters Z-M, comma, period, slash
-        if (scancode <= 50) {
-            key = 'z' + (scancode - 44);
-        } else if (scancode == 51) {
-            key = ',';
-        } else if (scancode == 52) {
-            key = '.';
-        } else {
-            key = '/';
-        }
-    } else {
+    // Standard US QWERTY keyboard mapping for common keys
+    switch (scancode) {
+        // Letters
+        case 16: key = 'q'; break;
+        case 17: key = 'w'; break;
+        case 18: key = 'e'; break;
+        case 19: key = 'r'; break;
+        case 20: key = 't'; break;
+        case 21: key = 'y'; break;
+        case 22: key = 'u'; break;
+        case 23: key = 'i'; break;
+        case 24: key = 'o'; break;
+        case 25: key = 'p'; break;
+        case 30: key = 'a'; break;
+        case 31: key = 's'; break;
+        case 32: key = 'd'; break;
+        case 33: key = 'f'; break;
+        case 34: key = 'g'; break;
+        case 35: key = 'h'; break;
+        case 36: key = 'j'; break;
+        case 37: key = 'k'; break;
+        case 38: key = 'l'; break;
+        case 44: key = 'z'; break;
+        case 45: key = 'x'; break;
+        case 46: key = 'c'; break;
+        case 47: key = 'v'; break;
+        case 48: key = 'b'; break;
+        case 49: key = 'n'; break;
+        case 50: key = 'm'; break;
+        
+        // Numbers
+        case 2: key = '1'; break;
+        case 3: key = '2'; break;
+        case 4: key = '3'; break;
+        case 5: key = '4'; break;
+        case 6: key = '5'; break;
+        case 7: key = '6'; break;
+        case 8: key = '7'; break;
+        case 9: key = '8'; break;
+        case 10: key = '9'; break;
+        case 11: key = '0'; break;
+        
         // Special keys
-        switch (scancode) {
-            case 14: key = '\b'; break;  // Backspace
-            case 15: key = '\t'; break;  // Tab
-            case 28: key = '\n'; break;  // Enter
-            case 57: key = ' '; break;   // Space
-            case 72: key = -1; break;    // Up arrow
-            case 80: key = -2; break;    // Down arrow
-            case 75: key = -3; break;    // Left arrow
-            case 77: key = -4; break;    // Right arrow
-            default: return;             // Ignore other keys
-        }
+        case 14: key = '\b'; break;  // Backspace
+        case 15: key = '\t'; break;  // Tab
+        case 28: key = '\n'; break;  // Enter
+        case 57: key = ' '; break;   // Space
+        case 72: key = -1; break;    // Up arrow
+        case 80: key = -2; break;    // Down arrow
+        case 75: key = -3; break;    // Left arrow
+        case 77: key = -4; break;    // Right arrow
+        
+        // Symbols
+        case 12: key = '-'; break;
+        case 13: key = '='; break;
+        case 26: key = '['; break;
+        case 27: key = ']'; break;
+        case 39: key = ';'; break;
+        case 40: key = '\''; break;
+        case 41: key = '`'; break;
+        case 43: key = '\\'; break;
+        case 51: key = ','; break;
+        case 52: key = '.'; break;
+        case 53: key = '/'; break;
+        
+        default: 
+            key = 0;  // Ignore other keys
+            break;
     }
     
     // Reset tab completion state if not tab key
@@ -1179,7 +1207,10 @@ static int cmd_help(int argc, char** argv) {
         // Help for specific command
         for (int i = 0; commands[i].name != NULL; i++) {
             if (strcmp(argv[1], commands[i].name) == 0) {
-                terminal_printf("%s - %s\n", commands[i].name, commands[i].description);
+                terminal_writestring(commands[i].name);
+                terminal_writestring(" - ");
+                terminal_writestring(commands[i].description);
+                terminal_writestring("\n");
                 
                 // Add detailed help for some commands
                 if (strcmp(argv[1], "ls") == 0) {
@@ -1195,7 +1226,9 @@ static int cmd_help(int argc, char** argv) {
             }
         }
         
-        terminal_printf("No help available for '%s'\n", argv[1]);
+        terminal_writestring("No help available for '");
+        terminal_writestring(argv[1]);
+        terminal_writestring("'\n");
         return 1;
     }
     
@@ -1208,7 +1241,7 @@ static int cmd_help(int argc, char** argv) {
         int len = strlen(commands[i].name);
         if (len > max_name_len) {
             max_name_len = len;
-		}
+        }
     }
     
     terminal_writestring("\nProcess Management:\n");
@@ -1218,10 +1251,23 @@ static int cmd_help(int argc, char** argv) {
             strcmp(commands[i].name, "nice") == 0 ||
             strcmp(commands[i].name, "sleep") == 0 ||
             strcmp(commands[i].name, "sched") == 0) {
-            terminal_printf("  %-*s - %s\n", max_name_len + 2, commands[i].name, commands[i].description);
+            
+            terminal_writestring("  ");
+            terminal_writestring(commands[i].name);
+            
+            // Add padding spaces for alignment
+            int padding = max_name_len + 2 - strlen(commands[i].name);
+            for (int j = 0; j < padding; j++) {
+                terminal_putchar(' ');
+            }
+            
+            terminal_writestring("- ");
+            terminal_writestring(commands[i].description);
+            terminal_writestring("\n");
         }
     }
     
+    // Similar modifications for other sections...
     terminal_writestring("\nMemory Management:\n");
     for (int i = 0; commands[i].name != NULL; i++) {
         if (strcmp(commands[i].name, "meminfo") == 0 ||
@@ -1229,7 +1275,19 @@ static int cmd_help(int argc, char** argv) {
             strcmp(commands[i].name, "memdisable") == 0 ||
             strcmp(commands[i].name, "memcheck") == 0 ||
             strcmp(commands[i].name, "memregions") == 0) {
-            terminal_printf("  %-*s - %s\n", max_name_len + 2, commands[i].name, commands[i].description);
+            
+            terminal_writestring("  ");
+            terminal_writestring(commands[i].name);
+            
+            // Add padding spaces for alignment
+            int padding = max_name_len + 2 - strlen(commands[i].name);
+            for (int j = 0; j < padding; j++) {
+                terminal_putchar(' ');
+            }
+            
+            terminal_writestring("- ");
+            terminal_writestring(commands[i].description);
+            terminal_writestring("\n");
         }
     }
     
@@ -1242,14 +1300,37 @@ static int cmd_help(int argc, char** argv) {
             strcmp(commands[i].name, "history") == 0 ||
             strcmp(commands[i].name, "reboot") == 0 ||
             strcmp(commands[i].name, "exit") == 0) {
-            terminal_printf("  %-*s - %s\n", max_name_len + 2, commands[i].name, commands[i].description);
+            
+            terminal_writestring("  ");
+            terminal_writestring(commands[i].name);
+            
+            // Add padding spaces for alignment
+            int padding = max_name_len + 2 - strlen(commands[i].name);
+            for (int j = 0; j < padding; j++) {
+                terminal_putchar(' ');
+            }
+            
+            terminal_writestring("- ");
+            terminal_writestring(commands[i].description);
+            terminal_writestring("\n");
         }
     }
     
     terminal_writestring("\nSystem Diagnostics:\n");
     for (int i = 0; commands[i].name != NULL; i++) {
         if (strcmp(commands[i].name, "diag") == 0) {
-            terminal_printf("  %-*s - %s\n", max_name_len + 2, commands[i].name, commands[i].description);
+            terminal_writestring("  ");
+            terminal_writestring(commands[i].name);
+            
+            // Add padding spaces for alignment
+            int padding = max_name_len + 2 - strlen(commands[i].name);
+            for (int j = 0; j < padding; j++) {
+                terminal_putchar(' ');
+            }
+            
+            terminal_writestring("- ");
+            terminal_writestring(commands[i].description);
+            terminal_writestring("\n");
         }
     }
     

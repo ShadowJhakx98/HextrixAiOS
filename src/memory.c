@@ -4,6 +4,7 @@
 #include "stdio.h"
 #include "terminal.h"
 #include "kmalloc.h"
+#include "string.h"
 #include <stdint.h>
 
 // Memory block descriptor for memory tracking

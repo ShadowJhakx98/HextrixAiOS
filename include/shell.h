@@ -5,6 +5,9 @@
 // Initialize shell
 void shell_init(void);
 
+// Enhanced shell initialization
+void shell_enhanced_init(void);
+
 // Run the shell
 void shell_run(void);
 

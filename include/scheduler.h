@@ -8,6 +8,12 @@
 // Initialize the scheduler
 void scheduler_init(void);
 
+// include/scheduler.h
+// Add this declaration with the existing ones:
+
+// Enhanced scheduler initialization (backward compatibility)
+void scheduler_enhanced_init(void);
+
 // Schedule the next process to run
 void scheduler_run_next(void);
 
