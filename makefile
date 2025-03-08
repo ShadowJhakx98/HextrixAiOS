@@ -6,18 +6,16 @@ LD = ld
 LDFLAGS = -m elf_i386 -T linker.ld
 SRC_DIR = src
 OBJ_DIR = build
+ASM_SOURCES = $(SRC_DIR)/boot.asm $(SRC_DIR)/test_stubs.asm
 C_SOURCES = $(SRC_DIR)/kernel.c \
-            $(SRC_DIR)/terminal.c \
-            $(SRC_DIR)/memory.c \
-            $(SRC_DIR)/scheduler.c \
-            $(SRC_DIR)/kmalloc.c \
-            $(SRC_DIR)/interrupts.c \
-            $(SRC_DIR)/keyboard.c \
-            $(SRC_DIR)/fs.c \
-            $(SRC_DIR)/shell.c \
-            $(SRC_DIR)/string.c \
-            $(SRC_DIR)/stdio.c
-ASM_SOURCES = $(SRC_DIR)/boot.asm
+    $(SRC_DIR)/terminal.c \
+    $(SRC_DIR)/string.c \
+    $(SRC_DIR)/memory.c \
+    $(SRC_DIR)/kmalloc.c \
+    $(SRC_DIR)/interrupts.c \
+    $(SRC_DIR)/shell.c \
+    $(SRC_DIR)/stdio.c \
+    $(SRC_DIR)/fs.c
 C_OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(C_SOURCES))
 ASM_OBJS = $(patsubst $(SRC_DIR)/%.asm,$(OBJ_DIR)/%.o,$(ASM_SOURCES))
 OBJS = $(ASM_OBJS) $(C_OBJS)

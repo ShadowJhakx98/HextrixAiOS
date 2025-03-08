@@ -2,7 +2,7 @@
 #include "fs.h"
 #include "terminal.h"
 #include "string.h"
-#include "stdio.h"  // Added stdio.h for terminal_printf
+#include "stdio.h"
 
 // Our simple in-memory file system
 static file_t files[FS_MAX_FILES];
@@ -16,7 +16,7 @@ void fs_init(void) {
     
     // Create a README file
     fs_create("README.txt");
-    fs_write("README.txt", "Welcome to Hextrix OS!\nType 'help' for available commands.\n", 54);
+    fs_write("README.txt", "Welcome to Hextrix OS v0.3.1!\nType 'help' for available commands.\n", 60);
 }
 
 int fs_create(const char* filename) {

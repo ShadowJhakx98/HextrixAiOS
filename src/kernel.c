@@ -1,19 +1,16 @@
-void kernel_main(unsigned int magic, unsigned int addr);
+// src/kernel.c
 #include "terminal.h"
-#include "memory.h"
-#include "scheduler.h"
 #include "kmalloc.h"
 #include "interrupts.h"
-#include "keyboard.h"
-#include "fs.h"
 #include "shell.h"
+#include "fs.h"
 
 void kernel_main(unsigned int magic, unsigned int addr) {
     // Initialize terminal
     terminal_initialize();
     
     // Print welcome message
-    terminal_writestring("Initializing Hextrix OS (32-bit)\n");
+    terminal_writestring("Initializing Hextrix OS (32-bit) - Polling Shell\n");
     
     // Check multiboot magic
     if (magic != 0x2BADB002) {
@@ -26,27 +23,22 @@ void kernel_main(unsigned int magic, unsigned int addr) {
     kmalloc_init();
     terminal_writestring("Memory management initialized\n");
     
-    // Initialize interrupt system
+    // Initialize "interrupts" (actually disable them)
     interrupts_init();
-    terminal_writestring("Interrupts initialized\n");
-    
-    // Initialize keyboard
-    keyboard_init();
-    terminal_writestring("Keyboard initialized\n");
     
     // Initialize file system
     fs_init();
     terminal_writestring("File system initialized\n");
     
-    // Initialize shell
+    // Initialize and run the shell
     shell_init();
-    
-    // Run the shell (this doesn't return)
     shell_run();
     
     // We should never get here
+    terminal_writestring("Shell exited. System halted.\n");
+    
+    // Enter an infinite loop
     while (1) {
-        // Halt CPU
         __asm__ volatile("hlt");
     }
 }
