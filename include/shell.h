@@ -5,7 +5,7 @@
 // Initialize shell
 void shell_init(void);
 
-// Run the shell (polling-based)
+// Run the shell
 void shell_run(void);
 
 // Process a single key from keyboard input

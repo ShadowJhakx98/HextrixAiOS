@@ -86,7 +86,7 @@ void kernel_main(unsigned int magic, unsigned int addr) {
     terminal_initialize();
     
     // Print welcome message
-    terminal_writestring("Initializing Hextrix OS (32-bit) v0.3.4 - Memory Protection\n");
+    terminal_writestring("Initializing Hextrix OS (32-bit) v0.3.5 - Polling Mode\n");
     
     // Check multiboot magic
     if (magic != 0x2BADB002) {
@@ -104,12 +104,12 @@ void kernel_main(unsigned int magic, unsigned int addr) {
     terminal_writestring("Paging initialized\n");
     
     // Memory protection is disabled by default for stability
-    // We'll only enable it if explicitly requested via the shell
     terminal_writestring("Memory protection is available but disabled by default\n");
     terminal_writestring("Use 'memenable' command to enable it when ready\n");
 
     // Initialize interrupts (actually disable them since we're using polling)
     interrupts_init();
+    terminal_writestring("Interrupts disabled, using polling mode\n");
     
     // Initialize file system
     fs_init();
@@ -120,8 +120,7 @@ void kernel_main(unsigned int magic, unsigned int addr) {
     scheduler_init();
     terminal_writestring("Process scheduler initialized\n");
     
-    // Instead of creating multiple processes, let's start simpler
-    // Just start the shell directly for now to debug the issue
+    // Initialize shell
     shell_init();
     terminal_writestring("Shell initialized\n");
     

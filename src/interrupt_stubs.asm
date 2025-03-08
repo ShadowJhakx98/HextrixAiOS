@@ -1,8 +1,12 @@
-; interrupt_stubs.asm - Simplified version
+; src/interrupt_stubs.asm
+[BITS 32]
+
+; Exports
 global isr_timer_stub
 global isr_keyboard_stub
-global idt_load
+global load_idt
 
+; External functions from C code
 extern timer_handler
 extern keyboard_handler
 
@@ -25,7 +29,7 @@ isr_keyboard_stub:
     iretd                   ; Return from interrupt
 
 ; Function to load the IDT
-idt_load:
+load_idt:
     push ebp
     mov ebp, esp
     mov eax, [ebp+8]        ; Get the pointer parameter

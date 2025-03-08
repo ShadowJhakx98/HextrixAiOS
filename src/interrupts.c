@@ -3,9 +3,6 @@
 #include "io.h"
 #include "terminal.h"
 #include "scheduler.h"
-#include "memory.h"
-#include "stdio.h"  // Added for terminal_printf
-#include "system_utils.h"  // Add this for system utilities
 
 // Timer ticks counter
 volatile uint32_t timer_ticks = 0;
@@ -16,7 +13,7 @@ void interrupts_init(void) {
     outb(0x21, 0xFF);
     outb(0xA1, 0xFF);
     
-    // Make sure interrupts are disabled
+    // Make sure interrupts are disabled at CPU level
     asm volatile("cli");
     
     // We're not setting up any IDT entries at all, since we're using polling
@@ -40,6 +37,9 @@ void timer_poll(void) {
     if (current_time != last_time) {
         last_time = current_time;
         timer_ticks++;
+        
+        // Call scheduler tick function to handle multitasking
+        scheduler_timer_tick();
     }
 }
 
@@ -49,4 +49,10 @@ int keyboard_poll(void) {
         return inb(0x60);  // Return scancode
     }
     return -1;  // No key available
+}
+
+// Register an interrupt handler (stub for compatibility)
+void interrupt_register_handler(uint8_t num, void (*handler)(void)) {
+    // Not implemented in polling mode
+    // This function is kept as a stub for API compatibility
 }

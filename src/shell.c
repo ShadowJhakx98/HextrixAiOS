@@ -30,7 +30,7 @@ static const char scancode_to_ascii[] = {
 // This doesn't require the full diagnostics library
 void run_interrupt_diagnostics_simple(void) {
     // Display basic CPU/system information 
-    terminal_writestring("Basic Interrupt Diagnostics:\n");
+    terminal_writestring("Basic System Diagnostics:\n");
     terminal_writestring("----------------------------\n");
     
     // Get some basic system information using inline assembly
@@ -74,12 +74,12 @@ void run_interrupt_diagnostics_simple(void) {
             (pic2_mask & (1 << i)) ? "Masked" : "Enabled");
     }
     
-    terminal_writestring("\nTo see more detailed diagnostics, build with full diagnostics.\n");
+    terminal_writestring("\nSystem is running in polling mode.\n");
 }
 
 // Initialize the shell
 void shell_init(void) {
-    terminal_writestring("Hextrix OS v0.3.4 - Memory Protection\n");
+    terminal_writestring("Hextrix OS v0.3.5 - Polling Mode\n");
     terminal_writestring("Type 'help' for a list of commands\n");
     terminal_writestring(PROMPT);
     buffer_pos = 0;
@@ -198,7 +198,7 @@ void shell_process_command(const char* command) {
         terminal_writestring("  memdisable   - Disable memory protection\n");
         terminal_writestring("  memcheck [addr] [flags] - Check if memory access is valid\n");
         terminal_writestring("  memregions   - Display memory region information\n");
-        terminal_writestring("  intdiag      - Run interrupt diagnostics\n");
+        terminal_writestring("  diag         - Run system diagnostics\n");
     }
     else if (strcmp(cmd, "clear") == 0) {
         terminal_clear();
@@ -225,7 +225,7 @@ void shell_process_command(const char* command) {
         terminal_printf("  Free:  %d bytes\n", free);
     }
     else if (strcmp(cmd, "version") == 0) {
-        terminal_writestring("Hextrix OS v0.3.4 - Memory Protection\n");
+        terminal_writestring("Hextrix OS v0.3.5 - Polling Mode\n");
     }
     // Process management commands
     else if (strcmp(cmd, "ps") == 0) {
@@ -438,9 +438,58 @@ void shell_process_command(const char* command) {
             terminal_printf("Created directory '%s'\n", arg1);
         }
     }
-    else if (strcmp(cmd, "intdiag") == 0) {
-        terminal_writestring("Running basic interrupt diagnostics...\n");
+    else if (strcmp(cmd, "diag") == 0 || strcmp(cmd, "intdiag") == 0) {
+        terminal_writestring("Running system diagnostics...\n");
         run_interrupt_diagnostics_simple();
+    }
+    else if (strcmp(cmd, "memenable") == 0) {
+        enable_memory_protection();
+    }
+    else if (strcmp(cmd, "memdisable") == 0) {
+        disable_memory_protection();
+    }
+    else if (strcmp(cmd, "memcheck") == 0) {
+        if (args < 2) {
+            terminal_writestring("Usage: memcheck [addr] [flags: 1=R,2=W,4=X,8=U]\n");
+            return;
+        }
+        
+        // Parse the address
+        uint32_t addr = 0;
+        for (i = 0; arg1[i]; i++) {
+            if (arg1[i] >= '0' && arg1[i] <= '9') {
+                addr = addr * 10 + (arg1[i] - '0');
+            } else if (arg1[i] >= 'a' && arg1[i] <= 'f') {
+                addr = addr * 16 + (arg1[i] - 'a' + 10);
+            } else if (arg1[i] >= 'A' && arg1[i] <= 'F') {
+                addr = addr * 16 + (arg1[i] - 'A' + 10);
+            } else if (arg1[i] == 'x' || arg1[i] == 'X') {
+                addr = 0; // Start of hex notation
+            } else {
+                terminal_writestring("Invalid address format\n");
+                return;
+            }
+        }
+        
+        // Parse the flags
+        uint32_t flags = 0;
+        for (i = 0; arg2[i]; i++) {
+            if (arg2[i] >= '0' && arg2[i] <= '9') {
+                flags = flags * 10 + (arg2[i] - '0');
+            } else {
+                terminal_writestring("Invalid flags format\n");
+                return;
+            }
+        }
+        
+        // Check if memory access is valid
+        int valid = is_valid_access(addr, flags);
+        
+        terminal_printf("Memory access to 0x%x with flags 0x%x is %s\n",
+            addr, flags, valid ? "valid" : "invalid");
+    }
+    else if (strcmp(cmd, "memregions") == 0) {
+        display_memory_regions();
     }
     else {
         terminal_writestring("Unknown command: ");
