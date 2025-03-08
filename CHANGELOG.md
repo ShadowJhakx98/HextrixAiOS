@@ -93,16 +93,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Created initial README file
 
 ## Roadmap (Upcoming Features)
-- Implement a simple shell using polling for keyboard input
-- Add a basic file system
-- Revisit the interrupt system with a fresh implementation
-- Add support for different keyboard layouts
-- Implement a more sophisticated memory manager with paging
-- Create persistent storage support
-- Add simple networking capabilities
-- Develop a basic GUI system
-- Implement multithreading with proper synchronization
-- Add support for user programs and process isolation
+- Implement memory protection mechanisms
+- Add improved interrupt handling system foundation
+- Implement preemptive multitasking
+- Add process isolation (user/kernel space separation)
+- Implement virtual memory and paging
+- Add memory protection rings
+- Optimize kernel heap
+- Implement process communication mechanisms
+- Add driver model improvements
+- Implement system extensions framework
 
 # HextrixAI - Changelog
 
