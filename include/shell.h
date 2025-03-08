@@ -14,4 +14,7 @@ void shell_handle_key(int scancode);
 // Process a single command
 void shell_process_command(const char* command);
 
+// External function for interrupt diagnostics
+void run_interrupt_diagnostics(void);
+
 #endif

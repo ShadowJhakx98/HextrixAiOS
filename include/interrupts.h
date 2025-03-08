@@ -23,10 +23,12 @@ extern volatile uint32_t timer_ticks;
 
 // Core functions
 void interrupts_init(void);
-void idt_set_gate(uint8_t num, uint32_t base, uint16_t sel, uint8_t flags);
 
 // Polling functions
 void timer_poll(void);
 int keyboard_poll(void);
+
+// Register interrupt handler function
+void interrupt_register_handler(uint8_t num, void (*handler)(void));
 
 #endif

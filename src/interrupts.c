@@ -3,6 +3,9 @@
 #include "io.h"
 #include "terminal.h"
 #include "scheduler.h"
+#include "memory.h"
+#include "stdio.h"  // Added for terminal_printf
+#include "system_utils.h"  // Add this for system utilities
 
 // Timer ticks counter
 volatile uint32_t timer_ticks = 0;
@@ -16,7 +19,10 @@ void interrupts_init(void) {
     // Make sure interrupts are disabled
     asm volatile("cli");
     
-    terminal_writestring("Interrupts completely disabled, using polling\n");
+    // We're not setting up any IDT entries at all, since we're using polling
+    // This avoids any issues with partially configured interrupt handlers
+    
+    terminal_writestring("Interrupts completely disabled, using polling only\n");
 }
 
 // Polling function for timer - can be called in a loop
@@ -34,8 +40,6 @@ void timer_poll(void) {
     if (current_time != last_time) {
         last_time = current_time;
         timer_ticks++;
-        
-        // We'll handle scheduling in kernel.c to avoid circular dependencies
     }
 }
 

@@ -8,6 +8,8 @@
 #include "interrupts.h" // For keyboard_poll() and timer_ticks
 #include "process.h"
 #include "scheduler.h"
+#include "memory.h" // For memory protection functions
+#include "io.h" // For inb function in diagnostics
 
 #define COMMAND_BUFFER_SIZE 256
 #define PROMPT "> "
@@ -24,9 +26,60 @@ static const char scancode_to_ascii[] = {
     '\\', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0, '*', 0, ' '
 };
 
+// Simple diagnostic function to use in shell.c
+// This doesn't require the full diagnostics library
+void run_interrupt_diagnostics_simple(void) {
+    // Display basic CPU/system information 
+    terminal_writestring("Basic Interrupt Diagnostics:\n");
+    terminal_writestring("----------------------------\n");
+    
+    // Get some basic system information using inline assembly
+    uint32_t eflags;
+    asm volatile("pushf\n\tpop %0" : "=r"(eflags));
+    
+    uint32_t cr0;
+    asm volatile("mov %%cr0, %0" : "=r"(cr0));
+    
+    // Print basic info
+    terminal_printf("EFLAGS: 0x%x (", eflags);
+    // Decode some EFLAGS bits
+    if (eflags & 0x00000200) terminal_writestring("IF ");
+    if (eflags & 0x00000100) terminal_writestring("TF ");
+    if (eflags & 0x00000004) terminal_writestring("PF ");
+    if (eflags & 0x00000001) terminal_writestring("CF ");
+    terminal_writestring(")\n");
+    
+    terminal_printf("CR0: 0x%x (", cr0);
+    // Decode some CR0 bits
+    if (cr0 & 0x80000000) terminal_writestring("PG ");
+    if (cr0 & 0x00010000) terminal_writestring("WP ");
+    if (cr0 & 0x00000001) terminal_writestring("PE ");
+    terminal_writestring(")\n");
+    
+    // Check PIC state
+    uint8_t pic1_mask = inb(0x21);
+    uint8_t pic2_mask = inb(0xA1);
+    
+    terminal_printf("PIC1 Mask: 0x%x\n", pic1_mask);
+    terminal_printf("PIC2 Mask: 0x%x\n", pic2_mask);
+    
+    terminal_writestring("\nIndividual IRQ Status:\n");
+    for (int i = 0; i < 8; i++) {
+        terminal_printf("IRQ%d: %s\n", i, 
+            (pic1_mask & (1 << i)) ? "Masked" : "Enabled");
+    }
+    
+    for (int i = 0; i < 8; i++) {
+        terminal_printf("IRQ%d: %s\n", i + 8, 
+            (pic2_mask & (1 << i)) ? "Masked" : "Enabled");
+    }
+    
+    terminal_writestring("\nTo see more detailed diagnostics, build with full diagnostics.\n");
+}
+
 // Initialize the shell
 void shell_init(void) {
-    terminal_writestring("Hextrix OS v0.3.3 - Enhanced Scheduler\n");
+    terminal_writestring("Hextrix OS v0.3.4 - Memory Protection\n");
     terminal_writestring("Type 'help' for a list of commands\n");
     terminal_writestring(PROMPT);
     buffer_pos = 0;
@@ -141,6 +194,11 @@ void shell_process_command(const char* command) {
         terminal_writestring("  nice [pid] [priority] - Change process priority\n");
         terminal_writestring("  sleep [ms]   - Sleep current shell for milliseconds\n");
         terminal_writestring("  version      - Show OS version\n");
+        terminal_writestring("  memenable    - Enable memory protection\n");
+        terminal_writestring("  memdisable   - Disable memory protection\n");
+        terminal_writestring("  memcheck [addr] [flags] - Check if memory access is valid\n");
+        terminal_writestring("  memregions   - Display memory region information\n");
+        terminal_writestring("  intdiag      - Run interrupt diagnostics\n");
     }
     else if (strcmp(cmd, "clear") == 0) {
         terminal_clear();
@@ -167,7 +225,7 @@ void shell_process_command(const char* command) {
         terminal_printf("  Free:  %d bytes\n", free);
     }
     else if (strcmp(cmd, "version") == 0) {
-        terminal_writestring("Hextrix OS v0.3.3 - Enhanced Scheduler\n");
+        terminal_writestring("Hextrix OS v0.3.4 - Memory Protection\n");
     }
     // Process management commands
     else if (strcmp(cmd, "ps") == 0) {
@@ -379,6 +437,10 @@ void shell_process_command(const char* command) {
         } else {
             terminal_printf("Created directory '%s'\n", arg1);
         }
+    }
+    else if (strcmp(cmd, "intdiag") == 0) {
+        terminal_writestring("Running basic interrupt diagnostics...\n");
+        run_interrupt_diagnostics_simple();
     }
     else {
         terminal_writestring("Unknown command: ");

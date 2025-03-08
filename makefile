@@ -6,6 +6,8 @@ LD = ld
 LDFLAGS = -m elf_i386 -T linker.ld
 SRC_DIR = src
 OBJ_DIR = build
+
+# Regular build sources
 ASM_SOURCES = $(SRC_DIR)/boot.asm $(SRC_DIR)/test_stubs.asm $(SRC_DIR)/context_switch.asm
 C_SOURCES = $(SRC_DIR)/kernel.c \
     $(SRC_DIR)/terminal.c \
@@ -17,27 +19,36 @@ C_SOURCES = $(SRC_DIR)/kernel.c \
     $(SRC_DIR)/stdio.c \
     $(SRC_DIR)/fs.c \
     $(SRC_DIR)/process.c \
-    $(SRC_DIR)/scheduler.c
+    $(SRC_DIR)/scheduler.c \
+    $(SRC_DIR)/system_utils.c
+
+# Generate object file lists
 C_OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(C_SOURCES))
 ASM_OBJS = $(patsubst $(SRC_DIR)/%.asm,$(OBJ_DIR)/%.o,$(ASM_SOURCES))
 OBJS = $(ASM_OBJS) $(C_OBJS)
 
+# Default target
 all: kernel.bin
 
+# Link kernel
 kernel.bin: $(OBJS)
-	$(LD) $(LDFLAGS) -o kernel.bin $(OBJS)
+	$(LD) $(LDFLAGS) -o $@ $^
 
+# Compile C files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
+# Compile ASM files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.asm
 	@mkdir -p $(OBJ_DIR)
 	$(ASM) $(ASMFLAGS) $< -o $@
 
+# Clean up build files
 clean:
-	rm -f kernel.bin $(OBJ_DIR)/*.o
+	rm -f kernel.bin diagnostics.bin $(OBJ_DIR)/*.o
 
+# Create ISO image
 iso: kernel.bin
 	mkdir -p iso/boot/grub
 	cp kernel.bin iso/boot/
@@ -48,3 +59,18 @@ iso: kernel.bin
 	echo '  boot' >> iso/boot/grub/grub.cfg
 	echo '}' >> iso/boot/grub/grub.cfg
 	grub-mkrescue -o hextrix.iso iso
+
+# Simple diagnostic shell version - embed the diagnostic command
+# but don't include the actual diagnostics library
+diagnostic-simple: kernel.bin
+	mkdir -p diag-iso/boot/grub
+	cp kernel.bin diag-iso/boot/kernel.bin
+	echo 'set timeout=0' > diag-iso/boot/grub/grub.cfg
+	echo 'set default=0' >> diag-iso/boot/grub/grub.cfg
+	echo 'menuentry "Hextrix OS" {' >> diag-iso/boot/grub/grub.cfg
+	echo '  multiboot /boot/kernel.bin' >> diag-iso/boot/grub/grub.cfg
+	echo '  boot' >> diag-iso/boot/grub/grub.cfg
+	echo '}' >> diag-iso/boot/grub/grub.cfg
+	grub-mkrescue -o hextrix-diagnostic.iso diag-iso
+
+.PHONY: all clean iso diagnostic-simple
