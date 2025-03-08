@@ -1,4 +1,4 @@
-### Updated CHANGELOG.md:
+### 2. CHANGELOG.md Update
 
 ```markdown
 # Changelog
@@ -10,7 +10,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Hextrix OS - Changelog
 
-## Version 0.3.6-dev (Current - In Progress)
+## Version 0.3.7-dev-v2 (Current - In Progress)
+- Implemented Hardware Abstraction Layer (HAL) for device independence
+- Created uniform HAL interface for all hardware interactions
+- Implemented timer and keyboard device drivers on HAL
+- Maintained polling-based approach with a clean abstraction layer
+- Simplified hardware access through standardized functions
+- Added hal.h interface with clear device API
+- Created device registration capability for future extension
+- Updated shell commands to use HAL for input handling
+- Improved project documentation to reflect HAL architecture
+- Made version numbering consistent across the project
+
+## Version 0.3.6-dev
 - Implemented stable polling-based I/O model
 - Removed experimental interrupt code
 - Cleaned up shell commands for consistency
