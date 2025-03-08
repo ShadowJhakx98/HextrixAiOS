@@ -1,3 +1,6 @@
+### Updated CHANGELOG.md:
+
+```markdown
 # Changelog
 
 All notable changes to the HextrixAI project will be documented in this file.
@@ -7,7 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Hextrix OS - Changelog
 
-## Version 0.3.5 (Current - In Progress)
+## Version 0.3.6-dev (Current - In Progress)
+- Implemented stable polling-based I/O model
+- Removed experimental interrupt code
+- Cleaned up shell commands for consistency
+- Simplified system diagnostics
+- Updated all documentation to reflect current approach
+- Created foundation for Hardware Abstraction Layer (HAL)
+- Improved system stability and reliability
+
+## Version 0.3.5-dev
 - Added interrupt diagnostics tools for system analysis
 - Identified issues with interrupt system:
   - All IRQs masked in PIC
