@@ -4,7 +4,8 @@
 #include "keyboard.h"
 #include "fs.h"
 #include "kmalloc.h"
-#include <string.h>
+#include "string.h"
+#include "stdio.h"  // Added stdio.h for sscanf and terminal_printf
 
 #define COMMAND_BUFFER_SIZE 256
 

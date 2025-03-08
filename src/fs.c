@@ -1,7 +1,8 @@
 // src/fs.c
 #include "fs.h"
 #include "terminal.h"
-#include <string.h>
+#include "string.h"
+#include "stdio.h"  // Added stdio.h for terminal_printf
 
 // Our simple in-memory file system
 static file_t files[FS_MAX_FILES];

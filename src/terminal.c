@@ -35,8 +35,39 @@ void terminal_initialize(void) {
     }
 }
 
+// Add this function to clear the terminal screen
+void terminal_clear(void) {
+    for (size_t y = 0; y < VGA_HEIGHT; y++) {
+        for (size_t x = 0; x < VGA_WIDTH; x++) {
+            const size_t index = y * VGA_WIDTH + x;
+            terminal_buffer[index] = vga_entry(' ', terminal_color);
+        }
+    }
+    terminal_row = 0;
+    terminal_column = 0;
+}
+
 void terminal_putchar(char c) {
     unsigned char uc = c;
+    
+    // Handle special characters
+    if (c == '\n') {
+        terminal_column = 0;
+        if (++terminal_row == VGA_HEIGHT)
+            terminal_row = 0;
+        return;
+    } else if (c == '\b') {
+        if (terminal_column > 0) {
+            terminal_column--;
+            terminal_buffer[terminal_row * VGA_WIDTH + terminal_column] = vga_entry(' ', terminal_color);
+        } else if (terminal_row > 0) {
+            terminal_row--;
+            terminal_column = VGA_WIDTH - 1;
+            terminal_buffer[terminal_row * VGA_WIDTH + terminal_column] = vga_entry(' ', terminal_color);
+        }
+        return;
+    }
+    
     terminal_buffer[terminal_row * VGA_WIDTH + terminal_column] = vga_entry(uc, terminal_color);
     if (++terminal_column == VGA_WIDTH) {
         terminal_column = 0;
