@@ -2,7 +2,7 @@
 
 HextrixAI is a cutting-edge artificial intelligence system that combines a powerful multimodal AI assistant with low-level OS integration capabilities. This project aims to create a comprehensive AI ecosystem that can interact with users through multiple modalities while leveraging deep system integration.
 
-## Current Development Status (v0.3.5-dev)
+## Current Development Status (v0.3.6-dev)
 
 The project is currently in active development with key features implemented:
 - Stable OS foundation with comprehensive process management
@@ -13,10 +13,10 @@ The project is currently in active development with key features implemented:
 - Diagnostic tools for system analysis and debugging
 
 Key development focus areas:
-- Converting from polling-based I/O to interrupt-based I/O
-- Implementing proper preemptive multitasking
-- Adding virtual memory management
-- Implementing system calls
+- Implementing Hardware Abstraction Layer (HAL)
+- Enhancing memory management system
+- Improving scheduler capabilities
+- Creating system call interface
 
 ## Core Features
 
@@ -25,6 +25,7 @@ Key development focus areas:
 - **Memory Protection**: Region-based memory protection with access controls
 - **Hierarchical File System**: Directory structure with path handling and navigation
 - **Interactive Shell**: Command-line interface with file system operations
+- **Polling-based I/O**: Stable input/output mechanism without interrupts
 - **Scalable Architecture**: Built for future integration with AI components
 - **Diagnostic Tools**: System analysis capabilities for development and debugging
 
@@ -41,7 +42,7 @@ Key development focus areas:
 - **System Information**: meminfo, version, help
 - **Process Management**: ps, kill, nice, sleep
 - **Memory Management**: memenable, memdisable, memcheck, memregions
-- **Diagnostics**: intdiag
+- **Diagnostics**: diag
 - **UI Control**: clear, echo
 
 ### Future AI Capabilities (Planned)
@@ -88,7 +89,7 @@ src/ - Source files
   kmalloc.c - Heap allocation
   fs.c - File system implementation
   shell.c - Interactive command shell
-  interrupts.c - I/O polling implementation
+  interrupts.c - Polling-based I/O implementation
   string.c - String handling functions
   stdio.c - Input/output utilities
   boot.asm - Bootloader and initialization
@@ -104,24 +105,24 @@ include/ - Header files
   scheduler.h - Task scheduler interface
 ```
 
-## Development Roadmap
+Development Roadmap
+Current Sprint (v0.3.6)
 
-### Current Sprint (v0.3.5)
-- Implement proper interrupt handling system
-- Transition from polling to interrupt-driven I/O
-- Enable preemptive multitasking
-- Implement proper page fault handling
+Implement Hardware Abstraction Layer (HAL)
+Enhance process management
+Optimize memory management
+Implement system call framework
 
-### Future Plans
-- Add system call interface
-- Implement driver model
-- Add network stack
-- Implement graphical user interface
-- Integrate AI components
+Future Plans
 
-## License
+Add driver model
+Add network stack
+Implement graphical user interface
+Integrate AI components
+
+License
 This project is licensed under the proprietary license - see LICENSE.md for details.
+Acknowledgments
 
-## Acknowledgments
-- Various open-source OS development resources
-- Contributors and researchers in OS development
+Various open-source OS development resources
+Contributors and researchers in OS development
