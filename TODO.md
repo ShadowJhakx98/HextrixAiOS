@@ -2,6 +2,113 @@
 
 This document outlines the planned enhancements and features for the HextrixAI project.
 
+## Current Status (v0.3.2)
+- ✅ Implemented polling-based I/O for system stability
+- ✅ Created a hierarchical file system with directory support
+- ✅ Developed a functional command-line shell
+- ✅ Implemented basic memory management
+- ✅ Added file and directory operations
+
+## Short-term Goals
+
+### Kernel and System Improvements
+- [ ] Optimize the existing file system
+  - [ ] Add file caching for improved performance
+  - [ ] Implement file permission enforcement
+  - [ ] Support for larger files with block allocation
+  - [ ] Add file handles/descriptors for better resource management
+- [ ] Revisit interrupt handling system
+  - [ ] Design clean interrupt architecture
+  - [ ] Implement proper error handling and recovery
+  - [ ] Create a hybrid approach using both polling and interrupts
+- [ ] Enhance memory management
+  - [ ] Implement proper paging and virtual memory
+  - [ ] Add memory protection between kernel and user space
+  - [ ] Create more sophisticated memory allocation algorithms
+
+### User Interface Enhancement
+- [ ] Improve shell capabilities
+  - [ ] Add support for command history
+  - [ ] Implement tab completion
+  - [ ] Create shell scripting capabilities
+  - [ ] Support for pipes and redirections
+- [ ] Add more system utilities
+  - [ ] Text editor
+  - [ ] System information tools
+  - [ ] Process management commands
+
+## Medium-term Goals
+
+### Process Management
+- [ ] Implement basic multitasking
+  - [ ] Create process data structures
+  - [ ] Develop a scheduler
+  - [ ] Add process creation and termination
+- [ ] Implement IPC (Inter-Process Communication)
+  - [ ] Message passing
+  - [ ] Shared memory
+  - [ ] Signals
+
+### Device Drivers
+- [ ] Create driver interface
+- [ ] Implement storage drivers
+  - [ ] ATA/IDE for disk access
+  - [ ] Support for persistent file storage
+- [ ] Add network interface drivers
+- [ ] Implement display drivers beyond basic text mode
+
+### 64-bit Support
+- [ ] Transition to 64-bit architecture
+- [ ] Implement long mode setup
+- [ ] Adapt memory management for 64-bit addressing
+- [ ] Update IDT and GDT for 64-bit mode
+
+## Long-term Goals
+
+### GUI System
+- [ ] Implement a basic windowing system
+- [ ] Create drawing primitives
+- [ ] Design a widget toolkit
+- [ ] Develop a window manager
+- [ ] Add mouse support
+
+### AI Integration
+- [ ] Create AI service architecture
+- [ ] Implement model loading and execution
+- [ ] Design API for AI service access
+- [ ] Optimize for resource-constrained environments
+- [ ] Develop memory-efficient inference engine
+
+### Networking
+- [ ] Implement TCP/IP stack
+- [ ] Add network configuration tools
+- [ ] Create socket interface
+- [ ] Support for network services
+
+### Application Support
+- [ ] Create program loader
+- [ ] Implement dynamic linking
+- [ ] Develop application framework
+- [ ] Support for third-party applications
+
+## Specialized Features
+
+### Security Enhancements
+- [ ] Implement proper user accounts and permissions
+- [ ] Add authentication system
+- [ ] Create secure boot mechanism
+- [ ] Design sandboxing for applications
+
+### Development Tools
+- [ ] Create an on-system compiler
+- [ ] Implement debugging tools
+- [ ] Add profiling utilities
+- [ ] Develop system monitoring tools
+
+# HextrixAI - Development Roadmap
+
+This document outlines the planned enhancements and features for the HextrixAI project.
+
 ## Core System Improvements
 
 ### General Enhancements
