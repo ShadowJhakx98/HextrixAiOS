@@ -18,13 +18,19 @@ This roadmap outlines the development trajectory for the HextrixAI project, comb
 *Duration: 14-17 hours*
 
 ### Initial Improvements (First 2-3 hours)
-- 🔲 Enhanced process scheduling
+- ✅ Enhanced process scheduling
+  - ✅ Proper process structures with Process Control Blocks (PCB)
+  - ✅ Dynamic process creation and termination
+  - ✅ Priority-based scheduling algorithm
+  - ✅ Multiple process states (READY, RUNNING, BLOCKED, TERMINATED, SLEEPING)
+  - ✅ Process CPU usage tracking
+  - ✅ Parent-child process relationships
 - 🔲 Basic memory protection mechanisms
 - 🔲 Improved interrupt handling system foundation
 
 ### Process Management
-- 🔲 Preemptive multitasking implementation
-- 🔲 Process creation/termination
+- ✅ Process creation/termination
+- 🔲 Preemptive multitasking implementation (partially implemented as cooperative)
 - 🔲 Process isolation (user/kernel space separation)
 - 🔲 Basic IPC (Inter-Process Communication)
 
@@ -41,15 +47,15 @@ This roadmap outlines the development trajectory for the HextrixAI project, comb
 - 🔲 System call interface
 
 ### File System Enhancements
-- 🔲 Block allocation for larger files
-- 🔲 File caching for improved performance
-- 🔲 File permissions enforcement
-- 🔲 Metadata support
+- ✅ Block allocation for larger files
+- ✅ File caching for improved performance
+- ✅ File permissions enforcement
+- ✅ Metadata support
 
 ### Shell Improvements
-- 🔲 Command history functionality
+- ✅ Command history functionality
+- ✅ Enhanced command parsing
 - 🔲 Tab completion
-- 🔲 Enhanced command parsing
 - 🔲 Pipes and redirections
 
 ## Phase 3: Advanced OS Features (Day 3)
