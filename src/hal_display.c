@@ -30,6 +30,7 @@ typedef struct {
 #define VGA_COLOR_LIGHT_RED     12
 #define VGA_COLOR_LIGHT_MAGENTA 13
 #define VGA_COLOR_LIGHT_BROWN   14
+#define VGA_COLOR_YELLOW        14  // Same as LIGHT_BROWN in VGA palette
 #define VGA_COLOR_WHITE         15
 
 // Display modes
@@ -429,62 +430,65 @@ void hal_display_message_box(const char* title, const char* message) {
 
 // Draw a progress bar
 void hal_display_progress_bar(uint16_t x, uint16_t y, uint16_t width, 
-                              uint8_t percent, const char* label) {
-    display_data_t* data = &display_data;
-    uint8_t saved_color = data->color;
-    
-    // Check boundaries
-    if (x + width > data->width) width = data->width - x;
-    
-    // Calculate fill width
-    uint16_t fill_width = (width * percent) / 100;
-    if (fill_width > width) fill_width = width;
-    
-    // Draw label
-    if (label) {
-        uint16_t label_len = 0;
-        while (label[label_len]) label_len++;
-        
-        if (label_len <= width) {
-            uint16_t label_x = x + (width - label_len) / 2;
-            for (uint16_t i = 0; i < label_len; i++) {
-                if (label_x + i < x + fill_width) {
-                    // Label inside filled area
-                    display_putchar_at(label[i], vga_entry_color(VGA_COLOR_BLACK, VGA_COLOR_GREEN), 
-                                    label_x + i, y);
-                } else {
-                    // Label in unfilled area
-                    display_putchar_at(label[i], vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_DARK_GREY), 
-                                    label_x + i, y);
-                }
-            }
-        }
-    }
-    
-    // Draw border
-    display_putchar_at('[', saved_color, x, y);
-    display_putchar_at(']', saved_color, x + width + 1, y);
-    
-    // Draw filled portion
-    for (uint16_t i = 0; i < fill_width; i++) {
-        if (!label || (i < (width - label_len) / 2) || 
-            (i >= (width - label_len) / 2 + label_len)) {
-            display_putchar_at('=', vga_entry_color(VGA_COLOR_BLACK, VGA_COLOR_GREEN), 
-                            x + 1 + i, y);
-        }
-    }
-    
-    // Draw unfilled portion
-    for (uint16_t i = fill_width; i < width; i++) {
-        if (!label || (i < (width - label_len) / 2) || 
-            (i >= (width - label_len) / 2 + label_len)) {
-            display_putchar_at(' ', vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_DARK_GREY), 
-                            x + 1 + i, y);
-        }
-    }
-    
-    // Restore color
-    data->color = saved_color;
+	uint8_t percent, const char* label) {
+display_data_t* data = &display_data;
+uint8_t saved_color = data->color;
+
+// Check boundaries
+if (x + width > data->width) width = data->width - x;
+
+// Calculate fill width
+uint16_t fill_width = (width * percent) / 100;
+if (fill_width > width) fill_width = width;
+
+// Initialize label_len outside the if block
+uint16_t label_len = 0;
+
+// Draw label
+if (label) {
+// Calculate label length
+while (label[label_len]) label_len++;
+
+if (label_len <= width) {
+uint16_t label_x = x + (width - label_len) / 2;
+for (uint16_t i = 0; i < label_len; i++) {
+if (label_x + i < x + fill_width) {
+// Label inside filled area
+display_putchar_at(label[i], vga_entry_color(VGA_COLOR_BLACK, VGA_COLOR_GREEN), 
+		  label_x + i, y);
+} else {
+// Label in unfilled area
+display_putchar_at(label[i], vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_DARK_GREY), 
+		  label_x + i, y);
+}
+}
+}
+}
+
+// Draw border
+display_putchar_at('[', saved_color, x, y);
+display_putchar_at(']', saved_color, x + width + 1, y);
+
+// Draw filled portion
+for (uint16_t i = 0; i < fill_width; i++) {
+if (!label || (i < (width - label_len) / 2) || 
+(i >= (width - label_len) / 2 + label_len)) {
+display_putchar_at('=', vga_entry_color(VGA_COLOR_BLACK, VGA_COLOR_GREEN), 
+  x + 1 + i, y);
+}
+}
+
+// Draw unfilled portion
+for (uint16_t i = fill_width; i < width; i++) {
+if (!label || (i < (width - label_len) / 2) || 
+(i >= (width - label_len) / 2 + label_len)) {
+display_putchar_at(' ', vga_entry_color(VGA_COLOR_WHITE, VGA_COLOR_DARK_GREY), 
+  x + 1 + i, y);
+}
+}
+
+// Restore color
+data->color = saved_color;
 }
 
 // Display enhanced status bar at bottom of screen

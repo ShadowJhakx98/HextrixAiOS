@@ -74,3 +74,42 @@ void* memset(void* s, int c, size_t n) {
         p[i] = (unsigned char)c;
     return s;
 }
+// Compare n characters of two strings
+int strncmp(const char* s1, const char* s2, size_t n) {
+    for (size_t i = 0; i < n; i++) {
+        if (s1[i] != s2[i])
+            return (unsigned char)s1[i] - (unsigned char)s2[i];
+        if (s1[i] == '\0')
+            return 0;
+    }
+    return 0;
+}
+
+// Find first occurrence of character c in string s
+char* strchr(const char* s, int c) {
+    while (*s != '\0') {
+        if (*s == (char)c)
+            return (char*)s;
+        s++;
+    }
+    
+    if ((char)c == '\0')
+        return (char*)s;
+    
+    return NULL;
+}
+
+// Concatenate src to dest
+char* strcat(char* dest, const char* src) {
+    char* original_dest = dest;
+    
+    // Find end of dest
+    while (*dest)
+        dest++;
+    
+    // Copy src to dest
+    while ((*dest++ = *src++))
+        ;
+    
+    return original_dest;
+}

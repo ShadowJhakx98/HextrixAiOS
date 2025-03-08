@@ -1,8 +1,8 @@
-// src/shell_enhanced.c
+// src/shell.c
 #include "shell.h"
 #include "terminal.h"
-#include "string.h"
-#include "stdio.h"
+#include "string.h"  // Added to fix implicit string function declarations
+#include "stdio.h"   // Added to fix implicit printf function declarations
 #include "fs.h"
 #include "kmalloc.h"
 #include "hal.h"
@@ -11,6 +11,8 @@
 #include "process.h"
 #include "scheduler.h"
 #include <stdarg.h>
+
+
 
 // Shell configuration
 #define COMMAND_BUFFER_SIZE 256
@@ -37,57 +39,9 @@ static char completion_buffer[COMMAND_BUFFER_SIZE];
 static char* completion_results[MAX_AUTOCOMPLETE_RESULTS] = {0};
 static int completion_count = 0;
 
-// Command structure
+// Command structure - Fix for the mixed up structure definition
 typedef struct {
-  %-*s - %s\n", max_name_len + 2, commands[i].name, commands[i].description);
-        }
-    }
-    
-    terminal_writestring("\nProcess Management:\n");
-    for (int i = 0; commands[i].name != NULL; i++) {
-        if (strcmp(commands[i].name, "ps") == 0 ||
-            strcmp(commands[i].name, "kill") == 0 ||
-            strcmp(commands[i].name, "nice") == 0 ||
-            strcmp(commands[i].name, "sleep") == 0 ||
-            strcmp(commands[i].name, "sched") == 0) {
-            terminal_printf("  %-*s - %s\n", max_name_len + 2, commands[i].name, commands[i].description);
-        }
-    }
-    
-    terminal_writestring("\nMemory Management:\n");
-    for (int i = 0; commands[i].name != NULL; i++) {
-        if (strcmp(commands[i].name, "meminfo") == 0 ||
-            strcmp(commands[i].name, "memenable") == 0 ||
-            strcmp(commands[i].name, "memdisable") == 0 ||
-            strcmp(commands[i].name, "memcheck") == 0 ||
-            strcmp(commands[i].name, "memregions") == 0) {
-            terminal_printf("  %-*s - %s\n", max_name_len + 2, commands[i].name, commands[i].description);
-        }
-    }
-    
-    terminal_writestring("\nShell Commands:\n");
-    for (int i = 0; commands[i].name != NULL; i++) {
-        if (strcmp(commands[i].name, "help") == 0 ||
-            strcmp(commands[i].name, "clear") == 0 ||
-            strcmp(commands[i].name, "echo") == 0 ||
-            strcmp(commands[i].name, "version") == 0 ||
-            strcmp(commands[i].name, "history") == 0 ||
-            strcmp(commands[i].name, "reboot") == 0 ||
-            strcmp(commands[i].name, "exit") == 0) {
-            terminal_printf("  %-*s - %s\n", max_name_len + 2, commands[i].name, commands[i].description);
-        }
-    }
-    
-    terminal_writestring("\nSystem Diagnostics:\n");
-    for (int i = 0; commands[i].name != NULL; i++) {
-        if (strcmp(commands[i].name, "diag") == 0) {
-            terminal_printf("  %-*s - %s\n", max_name_len + 2, commands[i].name, commands[i].description);
-        }
-    }
-    
-    terminal_writestring("\nType 'help <command>' for more information on a specific command.\n");
-    return 0;
-}  const char* name;
+    const char* name;
     const char* description;
     int (*handler)(int argc, char** argv);
 } command_t;
@@ -610,145 +564,6 @@ void shell_enhanced_init(void) {
     completion_count = 0;
 }
 
-// Simple sprintf implementation for the shell
-static int sprintf(char *str, const char *format, ...) {
-    va_list args;
-    va_start(args, format);
-    
-    int i = 0; // Output string position
-    int j = 0; // Format string position
-    
-    while (format[j]) {
-        if (format[j] == '%') {
-            j++;
-            switch (format[j]) {
-                case 'd': {
-                    int val = va_arg(args, int);
-                    
-                    // Handle negative numbers
-                    if (val < 0) {
-                        str[i++] = '-';
-                        val = -val;
-                    }
-                    
-                    // Handle zero
-                    if (val == 0) {
-                        str[i++] = '0';
-                    }
-                    else {
-                        // Convert to string in reverse
-                        char temp[16];
-                        int temp_pos = 0;
-                        
-                        while (val > 0) {
-                            temp[temp_pos++] = '0' + (val % 10);
-                            val /= 10;
-                        }
-                        
-                        // Reverse the string
-                        while (temp_pos > 0) {
-                            str[i++] = temp[--temp_pos];
-                        }
-                    }
-                    break;
-                }
-                case 's': {
-                    char* s = va_arg(args, char*);
-                    while (*s) {
-                        str[i++] = *s++;
-                    }
-                    break;
-                }
-                case 'x': {
-                    unsigned int val = va_arg(args, unsigned int);
-                    
-                    // Handle zero
-                    if (val == 0) {
-                        str[i++] = '0';
-                        break;
-                    }
-                    
-                    // Convert to hex string in reverse
-                    char temp[16];
-                    int temp_pos = 0;
-                    
-                    while (val > 0) {
-                        int digit = val & 0xF;
-                        temp[temp_pos++] = digit < 10 ? '0' + digit : 'a' + (digit - 10);
-                        val >>= 4;
-                    }
-                    
-                    // Reverse the string
-                    while (temp_pos > 0) {
-                        str[i++] = temp[--temp_pos];
-                    }
-                    break;
-                }
-                case '0': {
-                    // Handle %02d format (pad with zeros)
-                    j++;
-                    if (format[j] >= '1' && format[j] <= '9') {
-                        int width = format[j] - '0';
-                        j++;
-                        if (format[j] == 'd') {
-                            int val = va_arg(args, int);
-                            
-                            // Handle negative numbers
-                            if (val < 0) {
-                                str[i++] = '-';
-                                val = -val;
-                            }
-                            
-                            // Convert to string in reverse
-                            char temp[16];
-                            int temp_pos = 0;
-                            
-                            // Handle zero
-                            if (val == 0) {
-                                temp[temp_pos++] = '0';
-                            }
-                            else {
-                                while (val > 0) {
-                                    temp[temp_pos++] = '0' + (val % 10);
-                                    val /= 10;
-                                }
-                            }
-                            
-                            // Pad with zeros
-                            while (temp_pos < width) {
-                                temp[temp_pos++] = '0';
-                            }
-                            
-                            // Reverse the string
-                            while (temp_pos > 0) {
-                                str[i++] = temp[--temp_pos];
-                            }
-                        }
-                    }
-                    break;
-                }
-                case '%':
-                    str[i++] = '%';
-                    break;
-                default:
-                    str[i++] = '%';
-                    str[i++] = format[j];
-                    break;
-            }
-        }
-        else {
-            str[i++] = format[j];
-        }
-        j++;
-    }
-    
-    // Null terminate
-    str[i] = '\0';
-    
-    va_end(args);
-    return i;
-}
-
 // Process a command
 void shell_process_command(const char* cmd) {
     // Make a copy of the command for parsing
@@ -768,7 +583,7 @@ void shell_process_command(const char* cmd) {
     // Look up and execute the command
     for (int i = 0; commands[i].name != NULL; i++) {
         if (strcmp(argv[0], commands[i].name) == 0) {
-            int result = commands[i].handler(argc, argv);
+			commands[i].handler(argc, argv);
             // If you want to add any post-command processing, do it here
             // For now we just run the command and return
             return;
@@ -1393,21 +1208,65 @@ static int cmd_help(int argc, char** argv) {
         int len = strlen(commands[i].name);
         if (len > max_name_len) {
             max_name_len = len;
+		}
+    }
+    
+    terminal_writestring("\nProcess Management:\n");
+    for (int i = 0; commands[i].name != NULL; i++) {
+        if (strcmp(commands[i].name, "ps") == 0 ||
+            strcmp(commands[i].name, "kill") == 0 ||
+            strcmp(commands[i].name, "nice") == 0 ||
+            strcmp(commands[i].name, "sleep") == 0 ||
+            strcmp(commands[i].name, "sched") == 0) {
+            terminal_printf("  %-*s - %s\n", max_name_len + 2, commands[i].name, commands[i].description);
         }
     }
     
-    // Print commands in categories
-    terminal_writestring("\nFile System Commands:\n");
+    terminal_writestring("\nMemory Management:\n");
     for (int i = 0; commands[i].name != NULL; i++) {
-        if (strcmp(commands[i].name, "ls") == 0 ||
-            strcmp(commands[i].name, "cat") == 0 ||
-            strcmp(commands[i].name, "write") == 0 ||
-            strcmp(commands[i].name, "rm") == 0 ||
-            strcmp(commands[i].name, "pwd") == 0 ||
-            strcmp(commands[i].name, "cd") == 0 ||
-            strcmp(commands[i].name, "mkdir") == 0 ||
-            strcmp(commands[i].name, "fsinfo") == 0 ||
-            strcmp(commands[i].name, "fscheck") == 0 ||
-            strcmp(commands[i].name, "fsrepair") == 0 ||
-            strcmp(commands[i].name, "diskdump") == 0) {
+        if (strcmp(commands[i].name, "meminfo") == 0 ||
+            strcmp(commands[i].name, "memenable") == 0 ||
+            strcmp(commands[i].name, "memdisable") == 0 ||
+            strcmp(commands[i].name, "memcheck") == 0 ||
+            strcmp(commands[i].name, "memregions") == 0) {
             terminal_printf("  %-*s - %s\n", max_name_len + 2, commands[i].name, commands[i].description);
+        }
+    }
+    
+    terminal_writestring("\nShell Commands:\n");
+    for (int i = 0; commands[i].name != NULL; i++) {
+        if (strcmp(commands[i].name, "help") == 0 ||
+            strcmp(commands[i].name, "clear") == 0 ||
+            strcmp(commands[i].name, "echo") == 0 ||
+            strcmp(commands[i].name, "version") == 0 ||
+            strcmp(commands[i].name, "history") == 0 ||
+            strcmp(commands[i].name, "reboot") == 0 ||
+            strcmp(commands[i].name, "exit") == 0) {
+            terminal_printf("  %-*s - %s\n", max_name_len + 2, commands[i].name, commands[i].description);
+        }
+    }
+    
+    terminal_writestring("\nSystem Diagnostics:\n");
+    for (int i = 0; commands[i].name != NULL; i++) {
+        if (strcmp(commands[i].name, "diag") == 0) {
+            terminal_printf("  %-*s - %s\n", max_name_len + 2, commands[i].name, commands[i].description);
+        }
+    }
+    
+    terminal_writestring("\nType 'help <command>' for more information on a specific command.\n");
+    return 0;
+}
+// Run the shell main loop
+void shell_run(void) {
+    terminal_writestring("Hextrix OS Shell\n");
+    terminal_writestring("Type 'help' for a list of commands\n");
+    terminal_writestring("> ");
+    
+    while (1) {
+        // Poll for keyboard input
+        if (hal_keyboard_is_key_available()) {
+            int scancode = hal_keyboard_read();
+            shell_handle_key(scancode);
+        }
+    }
+}

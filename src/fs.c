@@ -578,3 +578,101 @@ int fs_update_node(int index, fs_node_t* info) {
     memcpy(&fs_nodes[index], info, sizeof(fs_node_t));
     return 0;
 }
+// File system node array
+fs_node_t fs_nodes[FS_MAX_FILES];
+
+// Current working directory
+static char current_directory[FS_MAX_PATH] = "/";
+
+// Initialize file system
+void fs_init(void) {
+    // Clear all nodes
+    for (int i = 0; i < FS_MAX_FILES; i++) {
+        fs_nodes[i].in_use = 0;
+    }
+    
+    // Create root directory
+    fs_nodes[0].in_use = 1;
+    fs_nodes[0].type = FS_TYPE_DIRECTORY;
+    strcpy(fs_nodes[0].name, "/");
+    strcpy(fs_nodes[0].path, "/");
+    fs_nodes[0].parent_index = -1;
+    
+    terminal_writestring("File system initialized\n");
+}
+
+// Get current working directory
+const char* fs_getcwd(void) {
+    return current_directory;
+}
+
+// List files in a directory
+void fs_list(const char* path) {
+    terminal_writestring("Directory listing (stub):\n");
+    terminal_writestring("  .  (directory)\n");
+    terminal_writestring("  .. (directory)\n");
+}
+
+// Create a file
+int fs_create(const char* path, int type) {
+    // Simple stub - in a real FS, this would create a file
+    return 0;  // Success
+}
+
+// Read from a file
+int fs_read(const char* path, char* buffer, size_t size) {
+    // Simple stub - in a real FS, this would read file data
+    strcpy(buffer, "File contents (stub)");
+    return strlen(buffer);
+}
+
+// Write to a file
+int fs_write(const char* path, const char* data, size_t size) {
+    // Simple stub - in a real FS, this would write data to file
+    return size;  // Success, wrote all bytes
+}
+
+// Delete a file
+int fs_delete(const char* path) {
+    // Simple stub - in a real FS, this would delete a file
+    return 0;  // Success
+}
+
+// Get file size
+int fs_size(const char* path) {
+    // Simple stub - in a real FS, this would return actual size
+    return 100;  // Return dummy size
+}
+
+// Create a directory
+int fs_mkdir(const char* path) {
+    // Simple stub - in a real FS, this would create a directory
+    return 0;  // Success
+}
+
+// Change current directory
+int fs_chdir(const char* path) {
+    // Simple stub - in a real FS, this would change directory
+    strcpy(current_directory, path);
+    return 0;  // Success
+}
+
+// Get file information by index
+int fs_stat_by_index(int index, fs_node_t* info) {
+    if (index < 0 || index >= FS_MAX_FILES) {
+        return -1;
+    }
+    
+    *info = fs_nodes[index];
+    return 0;
+}
+
+// Update file node
+int fs_update_node(int index, fs_node_t* info) {
+    if (index < 0 || index >= FS_MAX_FILES) {
+        return -1;
+    }
+    
+    fs_nodes[index] = *info;
+    return 0;
+}
