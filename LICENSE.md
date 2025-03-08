@@ -1,63 +1,47 @@
-# MIT License
+# Proprietary License
 
-Copyright (c) 2025 HextrixAI Contributors
+Copyright (c) 2025 Jared Edwards - The Hextrix AI Project
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+## License Terms and Conditions
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+This software and associated documentation files (the "Software") are the proprietary and confidential property of Jared Edwards ("Owner"). All rights to the Software are reserved by the Owner.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+### Restrictions
 
-## Third Party Licenses
+1. **No Modification**: You may not modify, adapt, or create derivative works based on the Software without explicit written permission from the Owner.
 
-This project incorporates several third-party open source components, each with their own license:
+2. **No Redistribution**: You may not distribute, sublicense, lease, rent, loan, sell, or otherwise transfer the Software to any third party without explicit written permission from the Owner.
 
-### AI Models
+3. **No Reverse Engineering**: You may not reverse engineer, decompile, disassemble, or attempt to derive the source code of the Software.
 
-- **LLaMA 3.3**: Licensed under [LLaMA License](https://github.com/meta-llama/llama/blob/main/LICENSE)
-- **Stable Diffusion XL**: Licensed under [CreativeML Open RAIL++-M License](https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0/blob/main/LICENSE.md)
-- **Gemma**: Licensed under [Gemma Terms of Use](https://ai.google.dev/gemma/terms)
-- **Whisper**: Licensed under [MIT License](https://github.com/openai/whisper/blob/main/LICENSE)
-- **LLaVA**: Licensed under [Apache License 2.0](https://github.com/haotian-liu/LLaVA/blob/main/LICENSE)
+4. **No Commercial Use**: You may not use the Software for any commercial purposes without explicit written permission from the Owner.
 
-### Libraries and APIs
+### Limited Permission
 
-- **Flask**: Licensed under [BSD License](https://github.com/pallets/flask/blob/main/LICENSE.rst)
-- **TensorFlow/PyTorch**: Licensed under [Apache License 2.0](https://github.com/tensorflow/tensorflow/blob/master/LICENSE)
-- **NumPy**: Licensed under [BSD License](https://github.com/numpy/numpy/blob/main/LICENSE.txt)
-- **NLTK**: Licensed under [Apache License 2.0](https://github.com/nltk/nltk/blob/develop/LICENSE.txt)
+The Owner grants you a limited, non-exclusive, non-transferable, revocable license to use the Software for personal, non-commercial purposes only, subject to the restrictions above.
 
-### OS Components
+### Contact for Permissions
 
-The OS components of this project are inspired by various open-source operating systems and are provided under the MIT License as specified above.
+For permissions to modify, distribute, or use the Software in ways not covered by this license, please contact:
 
-### API Usage
+Email: thehextrixai@hextrix.net
 
-When using this software with third-party APIs (Google, Cloudflare, etc.), users must comply with the respective terms of service for those APIs.
+### Third Party Components
 
-## Data Privacy Notice
+This project may incorporate several third-party open source components, each with their own license. The use of these components in the Software does not grant you any rights to the Software beyond those specified in this license.
+
+### Data Privacy Notice
 
 This software may collect and process personal data. Users are responsible for ensuring compliance with applicable data protection laws, including obtaining appropriate consent from end users before processing their personal data.
 
-## Disclaimer
+### Disclaimer
 
-The license grant for this project does not include permission to use the project for:
-1. Generating or facilitating the generation of harmful, misleading, or deceptive content
-2. Impersonating individuals without their consent
-3. Activities that violate human rights or applicable laws
-4. Harmful or exploitative uses targeting vulnerable populations
-5. Creating applications that primarily serve to replicate or compete directly with the core HextrixAI service
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE OWNER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-For questions regarding the license or permitted uses, please contact the project maintainers.
+### Termination
+
+This license is effective until terminated. Your rights under this license will terminate automatically without notice if you fail to comply with any of its terms.
+
+### Governing Law
+
+This license shall be governed by and construed in accordance with the laws of the jurisdiction in which the Owner resides, without regard to its conflict of law provisions.
