@@ -37,9 +37,12 @@ This roadmap outlines the development trajectory for the HextrixAI project, comb
   - ✅ Enhanced polling efficiency
   - ✅ Created foundation for future HAL implementation
 
-### Hardware Abstraction Layer (HAL) 🔄
-- 🟡 Define HAL interfaces
-- 🟡 Implement device abstraction
+### Hardware Abstraction Layer (HAL) ✅
+- ✅ Define HAL interfaces
+- ✅ Implement device abstraction
+- ✅ Create uniform hardware interaction API
+- ✅ Implement timer device through HAL
+- ✅ Implement keyboard device through HAL
 - 🔲 Create unified driver model
 - 🔲 Add hardware detection mechanisms
 
@@ -57,7 +60,7 @@ This roadmap outlines the development trajectory for the HextrixAI project, comb
 
 ### System I/O
 - ✅ Stable polling-based I/O system
-- 🟡 Device abstraction layer (in progress)
+- ✅ Device abstraction layer (HAL implementation)
 - 🔲 System call interface
 
 ### File System Enhancements
@@ -74,23 +77,26 @@ This roadmap outlines the development trajectory for the HextrixAI project, comb
 
 ## Immediate Next Steps
 
-1. **Implement Hardware Abstraction Layer (Priority)**
-   - Define common interfaces for hardware devices
-   - Create polling-based implementations behind HAL interface
-   - Design with both polling and future interrupt support in mind
-   - Create driver registration mechanism
-
-2. **Enhance Memory Management**
+1. **Enhance Memory Management**
    - Optimize page allocation
    - Implement proper memory mapping
    - Create memory statistics visualization
+   - Add memory allocation statistics
 
-3. **Improve Process Management**
-   - Enhance scheduler with more sophisticated algorithms
-   - Implement better context switching
-   - Add process resource limits
-
-4. **Implement System Call Framework**
+2. **Implement System Call Framework**
    - Define system call interface
    - Create syscall dispatcher
    - Implement core system calls
+   - Add syscall validation
+
+3. **Expand HAL with More Drivers**
+   - Create display driver through HAL
+   - Implement storage driver through HAL
+   - Add device enumeration capability
+   - Create device discovery mechanism
+
+4. **Improve Process Management**
+   - Enhance scheduler with more sophisticated algorithms
+   - Implement better context switching
+   - Add process resource limits
+   - Create proper process isolation
