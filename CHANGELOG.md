@@ -4,6 +4,52 @@ All notable changes to the HextrixAI project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+# Hextrix OS - Changelog
+
+## Version 0.3.0 (Current)
+- Added keyboard input driver with PS/2 support
+- Implemented memory management with kmalloc/kfree functions
+- Added simple in-memory file system with basic operations:
+  - File creation and deletion
+  - Reading and writing to files
+  - File listing capability
+- Implemented interactive shell with commands:
+  - help - Show available commands
+  - clear - Clear the screen
+  - ls - List files
+  - cat - Display file contents
+  - write - Create/write to a file
+  - rm - Delete a file
+  - meminfo - Display memory usage statistics
+
+## Version 0.2.0
+- Converted OS from 64-bit to 32-bit architecture for better compatibility
+- Fixed boot process to properly support GRUB multiboot
+- Implemented proper kernel entry point with multiboot header
+- Added stack initialization in boot sequence
+- Created proper linker script for 32-bit mode
+- Fixed VirtualBox and QEMU compatibility issues
+- Implemented task scheduler with basic preemptive multitasking
+- Added terminal driver with basic text output capabilities
+
+## Version 0.1.0
+- Initial OS structure and build system
+- Basic kernel entry point
+- Simple terminal output functionality
+- Basic memory management primitives
+- Created build system with makefile
+- Added ISO creation capability with GRUB bootloader
+- Set up basic project structure with header files and source files organization
+- Created initial README file
+
+## Roadmap (Upcoming Features)
+- Add support for different keyboard layouts
+- Implement a more sophisticated memory manager with paging
+- Create persistent storage support
+- Add simple networking capabilities
+- Develop a basic GUI system
+- Implement multithreading with proper synchronization
+- Add support for user programs and process isolation
 
 ## [Unreleased]
 
