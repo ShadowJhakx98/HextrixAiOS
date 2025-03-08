@@ -53,8 +53,9 @@ void terminal_putchar(char c) {
     // Handle special characters
     if (c == '\n') {
         terminal_column = 0;
-        if (++terminal_row == VGA_HEIGHT)
-            terminal_row = 0;
+        if (++terminal_row == VGA_HEIGHT) {
+            terminal_scroll();
+        }
         return;
     } else if (c == '\b') {
         if (terminal_column > 0) {
@@ -71,9 +72,31 @@ void terminal_putchar(char c) {
     terminal_buffer[terminal_row * VGA_WIDTH + terminal_column] = vga_entry(uc, terminal_color);
     if (++terminal_column == VGA_WIDTH) {
         terminal_column = 0;
-        if (++terminal_row == VGA_HEIGHT)
-            terminal_row = 0;
+        if (++terminal_row == VGA_HEIGHT) {
+            terminal_scroll();
+        }
     }
+}
+
+// Add scrolling function to terminal.c
+void terminal_scroll(void) {
+    // Move each line up one position
+    for (size_t y = 0; y < VGA_HEIGHT - 1; y++) {
+        for (size_t x = 0; x < VGA_WIDTH; x++) {
+            const size_t dst_index = y * VGA_WIDTH + x;
+            const size_t src_index = (y + 1) * VGA_WIDTH + x;
+            terminal_buffer[dst_index] = terminal_buffer[src_index];
+        }
+    }
+    
+    // Clear the last line
+    for (size_t x = 0; x < VGA_WIDTH; x++) {
+        const size_t index = (VGA_HEIGHT - 1) * VGA_WIDTH + x;
+        terminal_buffer[index] = vga_entry(' ', terminal_color);
+    }
+    
+    // Set cursor to start of last line
+    terminal_row = VGA_HEIGHT - 1;
 }
 
 void terminal_writestring(const char* data) {

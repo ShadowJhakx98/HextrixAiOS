@@ -2,8 +2,9 @@
 #include "interrupts.h"
 #include "io.h"
 #include "terminal.h"
+#include "scheduler.h"
 
-// Stub for timer ticks - won't be used with interrupts
+// Timer ticks counter
 volatile uint32_t timer_ticks = 0;
 
 // Initialize interrupts - but actually disable them completely
@@ -15,7 +16,7 @@ void interrupts_init(void) {
     // Make sure interrupts are disabled
     asm volatile("cli");
     
-    terminal_writestring("Interrupts completely disabled\n");
+    terminal_writestring("Interrupts completely disabled, using polling\n");
 }
 
 // Polling function for timer - can be called in a loop
@@ -33,6 +34,8 @@ void timer_poll(void) {
     if (current_time != last_time) {
         last_time = current_time;
         timer_ticks++;
+        
+        // We'll handle scheduling in kernel.c to avoid circular dependencies
     }
 }
 

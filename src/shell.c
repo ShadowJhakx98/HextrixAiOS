@@ -5,7 +5,9 @@
 #include "stdio.h"
 #include "fs.h"
 #include "kmalloc.h"
-#include "interrupts.h" // For keyboard_poll()
+#include "interrupts.h" // For keyboard_poll() and timer_ticks
+#include "process.h"
+#include "scheduler.h"
 
 #define COMMAND_BUFFER_SIZE 256
 #define PROMPT "> "
@@ -24,10 +26,49 @@ static const char scancode_to_ascii[] = {
 
 // Initialize the shell
 void shell_init(void) {
-    terminal_writestring("Hextrix OS v0.3.2 - Polling Shell\n");
+    terminal_writestring("Hextrix OS v0.3.3 - Enhanced Scheduler\n");
     terminal_writestring("Type 'help' for a list of commands\n");
     terminal_writestring(PROMPT);
     buffer_pos = 0;
+}
+
+// Process a single key from keyboard input
+void shell_handle_key(int scancode) {
+    if (scancode < 0 || scancode >= sizeof(scancode_to_ascii)) {
+        return;
+    }
+    
+    // Convert scancode to ASCII
+    char c = scancode_to_ascii[scancode];
+    
+    // Process the character if valid
+    if (c) {
+        if (c == '\n') {
+            // End of command, process it
+            terminal_putchar('\n');
+            command_buffer[buffer_pos] = '\0';
+            
+            shell_process_command(command_buffer);
+            
+            // Reset buffer and show prompt
+            buffer_pos = 0;
+            terminal_writestring(PROMPT);
+        } 
+        else if (c == '\b') {
+            // Backspace
+            if (buffer_pos > 0) {
+                buffer_pos--;
+                terminal_putchar('\b');
+                terminal_putchar(' ');
+                terminal_putchar('\b');
+            }
+        }
+        else if (buffer_pos < COMMAND_BUFFER_SIZE - 1) {
+            // Regular character
+            command_buffer[buffer_pos++] = c;
+            terminal_putchar(c);
+        }
+    }
 }
 
 // Process a command
@@ -95,6 +136,10 @@ void shell_process_command(const char* command) {
         terminal_writestring("  write [file] - Create/edit a file\n");
         terminal_writestring("  rm [file]    - Delete a file\n");
         terminal_writestring("  meminfo      - Display memory usage\n");
+        terminal_writestring("  ps           - List running processes\n");
+        terminal_writestring("  kill [pid]   - Terminate a process\n");
+        terminal_writestring("  nice [pid] [priority] - Change process priority\n");
+        terminal_writestring("  sleep [ms]   - Sleep current shell for milliseconds\n");
         terminal_writestring("  version      - Show OS version\n");
     }
     else if (strcmp(cmd, "clear") == 0) {
@@ -122,7 +167,99 @@ void shell_process_command(const char* command) {
         terminal_printf("  Free:  %d bytes\n", free);
     }
     else if (strcmp(cmd, "version") == 0) {
-        terminal_writestring("Hextrix OS v0.3.2 - Polling-based system\n");
+        terminal_writestring("Hextrix OS v0.3.3 - Enhanced Scheduler\n");
+    }
+    // Process management commands
+    else if (strcmp(cmd, "ps") == 0) {
+        process_list();
+    }
+    else if (strcmp(cmd, "kill") == 0) {
+        if (args < 1) {
+            terminal_writestring("Usage: kill [pid]\n");
+            return;
+        }
+        
+        int pid = 0;
+        for (i = 0; arg1[i]; i++) {
+            if (arg1[i] >= '0' && arg1[i] <= '9') {
+                pid = pid * 10 + (arg1[i] - '0');
+            } else {
+                terminal_writestring("Invalid PID format\n");
+                return;
+            }
+        }
+        
+        if (pid <= 0) {
+            terminal_writestring("Cannot kill system processes\n");
+            return;
+        }
+        
+        process_terminate(pid);
+    }
+    else if (strcmp(cmd, "nice") == 0) {
+        if (args < 2) {
+            terminal_writestring("Usage: nice [pid] [priority: 0=low, 1=normal, 2=high, 3=realtime]\n");
+            return;
+        }
+        
+        int pid = 0;
+        for (i = 0; arg1[i]; i++) {
+            if (arg1[i] >= '0' && arg1[i] <= '9') {
+                pid = pid * 10 + (arg1[i] - '0');
+            } else {
+                terminal_writestring("Invalid PID format\n");
+                return;
+            }
+        }
+        
+        int priority = 0;
+        for (i = 0; arg2[i]; i++) {
+            if (arg2[i] >= '0' && arg2[i] <= '9') {
+                priority = priority * 10 + (arg2[i] - '0');
+            } else {
+                terminal_writestring("Invalid priority format\n");
+                return;
+            }
+        }
+        
+        if (priority > PROCESS_PRIORITY_REALTIME) {
+            terminal_printf("Invalid priority: %d. Must be 0-3\n", priority);
+            return;
+        }
+        
+        process_set_priority(pid, priority);
+        terminal_printf("Set PID %d priority to %d\n", pid, priority);
+    }
+    else if (strcmp(cmd, "sleep") == 0) {
+        if (args < 1) {
+            terminal_writestring("Usage: sleep [milliseconds]\n");
+            return;
+        }
+        
+        int ms = 0;
+        for (i = 0; arg1[i]; i++) {
+            if (arg1[i] >= '0' && arg1[i] <= '9') {
+                ms = ms * 10 + (arg1[i] - '0');
+            } else {
+                terminal_writestring("Invalid time format\n");
+                return;
+            }
+        }
+        
+        terminal_printf("Sleeping for %d ms...\n", ms);
+        
+        // For testing, we'll use a busy-wait approach
+        // In a real implementation with process scheduling,
+        // we would use process_sleep() here
+        uint32_t start_time = timer_ticks;
+        uint32_t ticks_to_wait = (ms / 10) + 1;  // Convert ms to ticks
+        
+        while (timer_ticks - start_time < ticks_to_wait) {
+            // Just keep polling the timer
+            timer_poll();
+        }
+        
+        terminal_writestring("Done sleeping\n");
     }
     // File system commands
     else if (strcmp(cmd, "ls") == 0) {
@@ -193,9 +330,6 @@ void shell_process_command(const char* command) {
                     }
                 }
             }
-            
-            // Don't hog the CPU
-            for (volatile int i = 0; i < 100000; i++) {}
         }
         
         content[content_pos] = '\0';
@@ -256,48 +390,14 @@ void shell_process_command(const char* command) {
 // Run the shell
 void shell_run(void) {
     int scancode;
-    char c;
     
     while (1) {
-        // Poll the timer to keep system responsive
-        timer_poll();
-        
         // Poll for keyboard input
         scancode = keyboard_poll();
         
         // Process keyboard input if available
-        if (scancode > 0 && scancode < sizeof(scancode_to_ascii)) {
-            // Convert scancode to ASCII
-            c = scancode_to_ascii[scancode];
-            
-            // Process the character if valid
-            if (c) {
-                if (c == '\n') {
-                    // End of command, process it
-                    terminal_putchar('\n');
-                    command_buffer[buffer_pos] = '\0';
-                    
-                    shell_process_command(command_buffer);
-                    
-                    // Reset buffer and show prompt
-                    buffer_pos = 0;
-                    terminal_writestring(PROMPT);
-                } 
-                else if (c == '\b') {
-                    // Backspace
-                    if (buffer_pos > 0) {
-                        buffer_pos--;
-                        terminal_putchar('\b');
-                        terminal_putchar(' ');
-                        terminal_putchar('\b');
-                    }
-                }
-                else if (buffer_pos < COMMAND_BUFFER_SIZE - 1) {
-                    // Regular character
-                    command_buffer[buffer_pos++] = c;
-                    terminal_putchar(c);
-                }
-            }
+        if (scancode > 0) {
+            shell_handle_key(scancode);
         }
     }
 }
