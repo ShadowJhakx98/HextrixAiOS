@@ -1,11 +1,26 @@
+ASM = nasm
+ASMFLAGS = -f elf32
 CC = gcc
-CFLAGS = -m64 -ffreestanding -nostdlib -Wall -Iinclude
+CFLAGS = -m32 -ffreestanding -nostdlib -Wall -Iinclude
 LD = ld
-LDFLAGS = -m elf_x86_64 -T linker.ld
+LDFLAGS = -m elf_i386 -T linker.ld
 SRC_DIR = src
 OBJ_DIR = build
-SOURCES = $(SRC_DIR)/kernel.c $(SRC_DIR)/terminal.c $(SRC_DIR)/memory.c $(SRC_DIR)/scheduler.c $(SRC_DIR)/kmalloc.c $(SRC_DIR)/interrupts.c
-OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(SOURCES))
+C_SOURCES = $(SRC_DIR)/kernel.c \
+            $(SRC_DIR)/terminal.c \
+            $(SRC_DIR)/memory.c \
+            $(SRC_DIR)/scheduler.c \
+            $(SRC_DIR)/kmalloc.c \
+            $(SRC_DIR)/interrupts.c \
+            $(SRC_DIR)/keyboard.c \
+            $(SRC_DIR)/fs.c \
+            $(SRC_DIR)/shell.c \
+            $(SRC_DIR)/string.c \
+            $(SRC_DIR)/stdio.c
+ASM_SOURCES = $(SRC_DIR)/boot.asm
+C_OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(C_SOURCES))
+ASM_OBJS = $(patsubst $(SRC_DIR)/%.asm,$(OBJ_DIR)/%.o,$(ASM_SOURCES))
+OBJS = $(ASM_OBJS) $(C_OBJS)
 
 all: kernel.bin
 
@@ -15,6 +30,10 @@ kernel.bin: $(OBJS)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.asm
+	@mkdir -p $(OBJ_DIR)
+	$(ASM) $(ASMFLAGS) $< -o $@
 
 clean:
 	rm -f kernel.bin $(OBJ_DIR)/*.o

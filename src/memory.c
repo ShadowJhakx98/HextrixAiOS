@@ -28,13 +28,13 @@ void init_paging(void) {
     }
 
     // Link page tables to directory
-    pd[0] = (uint64_t)pt | 3;
-    pd[1] = (uint64_t)pt2 | 3;
-    pdp[0] = (uint64_t)pd | 3;
-    pml4[0] = (uint64_t)pdp | 3;
+    pd[0] = (uint32_t)pt | 3;
+    pd[1] = (uint32_t)pt2 | 3;
+    pdp[0] = (uint32_t)pd | 3;
+    pml4[0] = (uint32_t)pdp | 3;
 
     // Load page table and enable paging
-    asm volatile("mov %0, %%cr3" : : "r"((uint64_t)pml4));
+    asm volatile("mov %0, %%cr3" : : "r"((uint32_t)pml4));
     uint64_t cr0;
     asm volatile("mov %%cr0, %0" : "=r"(cr0));
     cr0 |= 0x80000000; // Enable paging

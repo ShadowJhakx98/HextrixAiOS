@@ -71,11 +71,11 @@ static void idt_set_gate(uint8_t num, uint64_t base, uint16_t sel, uint8_t flags
 
 void init_interrupts(void) {
     idtp.limit = (sizeof(struct idt_entry) * 256) - 1;
-    idtp.base = (uint64_t)&idt;
+    idtp.base = (uint32_t)&idt;
 
     // Set up timer (IRQ0) and keyboard (IRQ1) handlers
-    idt_set_gate(0x20, (uint64_t)timer_handler, 0x08, 0x8E);
-    idt_set_gate(0x21, (uint64_t)keyboard_handler, 0x08, 0x8E);
+    idt_set_gate(0x20, (uint32_t)timer_handler, 0x08, 0x8E);
+    idt_set_gate(0x21, (uint32_t)keyboard_handler, 0x08, 0x8E);
 
     // Remap PIC
     outb(0x20, 0x11); outb(0xA0, 0x11);
