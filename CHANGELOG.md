@@ -7,15 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Hextrix OS - Changelog
 
-# Changelog
-
-All notable changes to the HextrixAI project will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-# Hextrix OS - Changelog
-
 ## Version 0.3.3 (Current)
 - Implemented enhanced process scheduler with proper process management
 - Added priority-based scheduling (LOW, NORMAL, HIGH, REALTIME priority levels)
