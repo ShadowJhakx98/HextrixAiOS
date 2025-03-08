@@ -24,7 +24,7 @@ static const char scancode_to_ascii[] = {
 
 // Initialize the shell
 void shell_init(void) {
-    terminal_writestring("Hextrix OS v0.3.1 - Polling Shell\n");
+    terminal_writestring("Hextrix OS v0.3.2 - Polling Shell\n");
     terminal_writestring("Type 'help' for a list of commands\n");
     terminal_writestring(PROMPT);
     buffer_pos = 0;
@@ -87,7 +87,10 @@ void shell_process_command(const char* command) {
         terminal_writestring("  help         - Show this help\n");
         terminal_writestring("  clear        - Clear the screen\n");
         terminal_writestring("  echo [text]  - Display text\n");
-        terminal_writestring("  ls           - List files\n");
+        terminal_writestring("  ls [dir]     - List files in directory\n");
+        terminal_writestring("  cd [dir]     - Change current directory\n");
+        terminal_writestring("  pwd          - Show current directory\n");
+        terminal_writestring("  mkdir [dir]  - Create a directory\n");
         terminal_writestring("  cat [file]   - Display file contents\n");
         terminal_writestring("  write [file] - Create/edit a file\n");
         terminal_writestring("  rm [file]    - Delete a file\n");
@@ -119,11 +122,15 @@ void shell_process_command(const char* command) {
         terminal_printf("  Free:  %d bytes\n", free);
     }
     else if (strcmp(cmd, "version") == 0) {
-        terminal_writestring("Hextrix OS v0.3.1 - Polling-based system\n");
+        terminal_writestring("Hextrix OS v0.3.2 - Polling-based system\n");
     }
     // File system commands
     else if (strcmp(cmd, "ls") == 0) {
-        fs_list();
+        if (args < 1) {
+            fs_list("");  // List current directory
+        } else {
+            fs_list(arg1);
+        }
     }
     else if (strcmp(cmd, "cat") == 0) {
         if (args < 1) {
@@ -195,7 +202,7 @@ void shell_process_command(const char* command) {
         
         // Create file if it doesn't exist
         if (fs_size(arg1) < 0) {
-            fs_create(arg1);
+            fs_create(arg1, FS_TYPE_FILE);
         }
         
         fs_write(arg1, content, content_pos);
@@ -211,6 +218,32 @@ void shell_process_command(const char* command) {
             terminal_printf("File '%s' not found\n", arg1);
         } else {
             terminal_printf("Deleted '%s'\n", arg1);
+        }
+    }
+    else if (strcmp(cmd, "pwd") == 0) {
+        terminal_printf("%s\n", fs_getcwd());
+    }
+    else if (strcmp(cmd, "cd") == 0) {
+        if (args < 1) {
+            // CD to root if no arguments
+            fs_chdir("/");
+            return;
+        }
+        
+        if (fs_chdir(arg1) < 0) {
+            terminal_printf("Cannot change to directory '%s'\n", arg1);
+        }
+    }
+    else if (strcmp(cmd, "mkdir") == 0) {
+        if (args < 1) {
+            terminal_writestring("Usage: mkdir [directory]\n");
+            return;
+        }
+        
+        if (fs_mkdir(arg1) < 0) {
+            terminal_printf("Failed to create directory '%s'\n", arg1);
+        } else {
+            terminal_printf("Created directory '%s'\n", arg1);
         }
     }
     else {
