@@ -4,9 +4,19 @@ All notable changes to the HextrixAI project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
 # Hextrix OS - Changelog
 
-## Version 0.3.0 (Current)
+## Version 0.3.1 (Current)
+- Refactored OS to use polling-based I/O instead of interrupts for improved stability
+- Implemented reliable timer polling mechanism
+- Added keyboard polling support
+- Fixed critical issues with system initialization
+- Successfully demonstrated timer-based event handling
+- Created a stable foundation for further development
+- Improved memory management system reliability
+
+## Version 0.3.0
 - Added keyboard input driver with PS/2 support
 - Implemented memory management with kmalloc/kfree functions
 - Added simple in-memory file system with basic operations:
@@ -43,6 +53,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Created initial README file
 
 ## Roadmap (Upcoming Features)
+- Implement a simple shell using polling for keyboard input
+- Add a basic file system
+- Revisit the interrupt system with a fresh implementation
 - Add support for different keyboard layouts
 - Implement a more sophisticated memory manager with paging
 - Create persistent storage support
@@ -50,6 +63,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Develop a basic GUI system
 - Implement multithreading with proper synchronization
 - Add support for user programs and process isolation
+
+# HextrixAI - Changelog
 
 ## [Unreleased]
 
