@@ -23,6 +23,10 @@ void scheduler_add_process(process_t* process);
 // Remove process from scheduler
 void scheduler_remove_process(uint32_t pid);
 
+// include/scheduler.h
+// Add this line with the existing declarations:
+void scheduler_timer_tick(void);
+
 // Get the number of active processes
 uint32_t scheduler_process_count(void);
 

@@ -10,6 +10,8 @@
 #include "scheduler.h"
 #include "memory.h" // For memory protection functions
 #include "io.h" // For inb function in diagnostics
+// At the top of src/shell.c, add:
+#include "hal.h"
 
 #define COMMAND_BUFFER_SIZE 256
 #define PROMPT "> "
@@ -79,7 +81,7 @@ void run_interrupt_diagnostics_simple(void) {
 
 // Initialize the shell
 void shell_init(void) {
-    terminal_writestring("Hextrix OS v0.3.5 - Polling Mode\n");
+    terminal_writestring("Hextrix OS v0.3.7-dev-v2 - HAL Edition\n");
     terminal_writestring("Type 'help' for a list of commands\n");
     terminal_writestring(PROMPT);
     buffer_pos = 0;
@@ -225,7 +227,7 @@ void shell_process_command(const char* command) {
         terminal_printf("  Free:  %d bytes\n", free);
     }
     else if (strcmp(cmd, "version") == 0) {
-        terminal_writestring("Hextrix OS v0.3.5 - Polling Mode\n");
+		terminal_writestring("Hextrix OS v0.3.7-dev-v2 - HAL Edition\n");
     }
     // Process management commands
     else if (strcmp(cmd, "ps") == 0) {
@@ -498,16 +500,12 @@ void shell_process_command(const char* command) {
     }
 }
 
-// Run the shell
+// Modify shell_run in src/shell.c
 void shell_run(void) {
-    int scancode;
-    
     while (1) {
-        // Poll for keyboard input
-        scancode = keyboard_poll();
-        
-        // Process keyboard input if available
-        if (scancode > 0) {
+        // Poll for keyboard input using HAL
+        if (hal_keyboard_is_key_available()) {
+            int scancode = hal_keyboard_read();
             shell_handle_key(scancode);
         }
     }

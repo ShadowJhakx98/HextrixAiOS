@@ -9,6 +9,7 @@ OBJ_DIR = build
 
 # Regular build sources
 ASM_SOURCES = $(SRC_DIR)/boot.asm $(SRC_DIR)/test_stubs.asm $(SRC_DIR)/context_switch.asm
+# Add to C_SOURCES in makefile
 C_SOURCES = $(SRC_DIR)/kernel.c \
     $(SRC_DIR)/terminal.c \
     $(SRC_DIR)/string.c \
@@ -20,8 +21,10 @@ C_SOURCES = $(SRC_DIR)/kernel.c \
     $(SRC_DIR)/fs.c \
     $(SRC_DIR)/process.c \
     $(SRC_DIR)/scheduler.c \
-    $(SRC_DIR)/system_utils.c
-
+    $(SRC_DIR)/system_utils.c \
+    $(SRC_DIR)/hal.c \
+    $(SRC_DIR)/hal_timer.c \
+    $(SRC_DIR)/hal_keyboard.c
 # Generate object file lists
 C_OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(C_SOURCES))
 ASM_OBJS = $(patsubst $(SRC_DIR)/%.asm,$(OBJ_DIR)/%.o,$(ASM_SOURCES))

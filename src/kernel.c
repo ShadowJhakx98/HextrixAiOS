@@ -9,6 +9,7 @@
 #include "memory.h"
 #include "stdio.h"  // Added for terminal_printf
 #include "system_utils.h" // Added for system_halt
+#include "hal.h" // Added for HAL functions
 
 // Demo task 1
 static void demo_task1(void) {
@@ -81,12 +82,15 @@ void test_memory_protection(void) {
     terminal_writestring("Memory protection test complete\n");
 }
 
+// Need to declare this function if it's not exposed in scheduler.h
+extern void scheduler_timer_tick(void);
+
 void kernel_main(unsigned int magic, unsigned int addr) {
     // Initialize terminal
     terminal_initialize();
     
     // Print welcome message
-    terminal_writestring("Initializing Hextrix OS (32-bit) v0.3.5 - Polling Mode\n");
+    terminal_writestring("Initializing Hextrix OS (32-bit) v0.3.6-dev - HAL Edition\n");
     
     // Check multiboot magic
     if (magic != 0x2BADB002) {
@@ -106,10 +110,14 @@ void kernel_main(unsigned int magic, unsigned int addr) {
     // Memory protection is disabled by default for stability
     terminal_writestring("Memory protection is available but disabled by default\n");
     terminal_writestring("Use 'memenable' command to enable it when ready\n");
-
-    // Initialize interrupts (actually disable them since we're using polling)
-    interrupts_init();
-    terminal_writestring("Interrupts disabled, using polling mode\n");
+    
+    // Initialize HAL
+    hal_init();
+    hal_init_devices();
+    terminal_writestring("Hardware Abstraction Layer initialized\n");
+    
+    // Register timer callback for scheduler
+    hal_timer_register_callback(scheduler_timer_tick);
     
     // Initialize file system
     fs_init();
@@ -127,11 +135,13 @@ void kernel_main(unsigned int magic, unsigned int addr) {
     // Main loop
     while (1) {
         // Poll the timer
-        timer_poll();
+        hal_timer_poll();
         
-        // Handle shell input directly
-        int scancode = keyboard_poll();
-        if (scancode > 0) {
+        // Poll keyboard and handle input
+        hal_keyboard_poll();
+        
+        if (hal_keyboard_is_key_available()) {
+            int scancode = hal_keyboard_read();
             shell_handle_key(scancode);
         }
         
