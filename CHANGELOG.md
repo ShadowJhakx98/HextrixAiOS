@@ -7,7 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Hextrix OS - Changelog
 
-## Version 0.4.0-beta (Current - In Progress)
+## Version 0.4.1-beta (Current - In Progress)
+- Fixed critical compilation errors in HAL and GUI subsystems:
+  - Resolved undefined references in hal_framebuffer.c and hal_mouse.c
+  - Implemented missing functions (find_window_at, find_control_at, abs)
+  - Fixed sprintf and snprintf implementations in stdio.c
+  - Resolved linker errors for missing standard library functions
+  - Corrected header file inclusions and dependencies
+  - Updated Makefile to properly handle nested build directories
+- Added new standard library implementation:
+  - Created stdlib.c with essential functions like abs()
+  - Added proper stdio.h header with complete function declarations
+- Successfully generated bootable ISO with complete GUI subsystem
+- Improved build system reliability with better directory handling
+- Eliminated critical warnings that were impacting build process
+
+## Version 0.4.0-beta (Previous)
 - Implemented framebuffer graphics driver for GUI rendering
 - Added PS/2 mouse driver with event handling capabilities
 - Created comprehensive window management system with:
@@ -29,7 +44,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added double-buffered rendering for smooth animations
 - Integrated GUI system with existing HAL architecture
 
-## Version 0.3.9-beta (Previous)
+## Version 0.3.9-beta
 - Implemented ATA/IDE disk driver for persistent storage
 - Added partition table support (MBR format)
 - Created filesystem abstraction layer with FAT32 support
