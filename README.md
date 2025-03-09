@@ -2,30 +2,30 @@
 
 HextrixAI is a cutting-edge artificial intelligence system that combines a powerful multimodal AI assistant with low-level OS integration capabilities. This project aims to create a comprehensive AI ecosystem that can interact with users through multiple modalities while leveraging deep system integration.
 
-## Current Development Status (v0.3.8-dev)
+## Current Development Status (v0.3.9-dev)
 
-The project is currently in active development with a significantly improved user interface and stability:
-- ✅ Fully functional command-line shell with reliable keyboard input
-- ✅ Comprehensive Hardware Abstraction Layer (HAL) with device drivers
-- ✅ Memory protection with software validation
-- ✅ Hierarchical file system with full command interface
-- ✅ Cooperative multitasking with priority-based scheduling
-- ✅ Command history and tab completion
-- ✅ Enhanced printf functionality with proper text formatting
+The project is in active development with significant progress in core OS foundations:
+- ✅ Fully functional Hardware Abstraction Layer (HAL) with device drivers
+- ✅ Memory management with paging and protection capabilities
+- ✅ Process management with priority-based scheduling
+- ✅ Shell environment with history and tab completion
+- ✅ ATA/IDE disk driver for persistent storage
+- ✅ File system with partition support and FAT32 capabilities
+- ✅ Comprehensive command-line interface
 
 ## Core Features
-
-### Command Line Shell
-- **User-Friendly Interface**: Reliable text-based interface with proper keyboard mapping
-- **Command Processing**: Support for a wide range of system commands
-- **History & Completion**: Command history navigation and tab completion
-- **Formatted Output**: Proper text formatting for readable output
 
 ### Hardware Abstraction Layer (HAL)
 - **Device Abstraction**: Uniform interface for hardware access
 - **Polling-Based Drivers**: Stable device interaction without interrupts
 - **Extensible Architecture**: Easy addition of new device drivers
 - **Hardware Independence**: OS code isolated from hardware details
+
+### Storage System
+- **ATA/IDE Disk Driver**: Support for hard disk storage
+- **Partition Management**: MBR partition table support
+- **File System Support**: Basic FAT32 implementation
+- **Mount Points**: Ability to mount and unmount partitions
 
 ### Process Management
 - **Process Control**: Complete PCB-based process management with state tracking
@@ -55,6 +55,15 @@ The project is currently in active development with a significantly improved use
 - `pwd` - Show current directory
 - `cd` - Change current directory
 - `mkdir` - Create a directory
+
+### Disk Management
+- `disk info` - Display disk information
+- `disk part` - Display partition table
+- `disk mkpart` - Create a partition
+- `disk rmpart` - Delete a partition
+- `disk format` - Format a partition
+- `mount` - Mount a file system
+- `umount` - Unmount a file system
 
 ### Process Management
 - `ps` - List running processes
@@ -105,59 +114,8 @@ make
 # Create an ISO image
 make iso
 
+# Create a virtual disk (if needed)
+qemu-img create -f raw hextrix_disk.img 64M
+
 # Run in QEMU
-qemu-system-i386 -cdrom hextrix.iso -m 512M
-```
-
-## Project Structure
-
-```
-src/               - Source files
-  kernel.c         - Main kernel entry point
-  terminal.c       - Text display handling
-  memory.c         - Memory management
-  kmalloc.c        - Heap allocation
-  fs.c             - File system implementation
-  shell.c          - Interactive command shell
-  hal.c            - Hardware Abstraction Layer core
-  hal_timer.c      - Timer device implementation
-  hal_keyboard.c   - Keyboard device implementation
-  hal_storage.c    - Storage device implementation
-  string.c         - String handling functions
-  stdio.c          - Input/output utilities
-  boot.asm         - Bootloader and initialization
-  process.c        - Process management
-  scheduler.c      - Task scheduling
-
-include/           - Header files
-  hal.h            - Hardware Abstraction Layer interface
-  fs.h             - File system definitions
-  shell.h          - Shell interface
-  kmalloc.h        - Memory allocation interface
-  process.h        - Process management declarations
-  scheduler.h      - Task scheduler interface
-```
-
-## Development Roadmap
-
-### Current Sprint (v0.3.8-dev)
-- ✅ Fix keyboard input and text formatting issues
-- ✅ Stabilize shell environment for usability
-- 🟡 Enhance file system functionality
-- 🟡 Improve memory management efficiency
-- 🔲 Implement system call framework
-
-### Future Sprints
-- Add support for command piping and I/O redirection
-- Implement proper disk-based file system
-- Create expanded device driver support
-- Add networking capabilities
-- Develop graphical user interface
-- Integrate AI components
-
-## License
-This project is licensed under the proprietary license - see LICENSE.md for details.
-
-## Acknowledgments
-- Various open-source OS development resources
-- Contributors and researchers in OS development
+qemu-system-i386 -cdrom hextrix.iso -drive file=hextrix_disk.img,format=raw,if=ide,index=0,media=disk -m 512M
