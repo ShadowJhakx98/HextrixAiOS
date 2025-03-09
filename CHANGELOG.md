@@ -7,7 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Hextrix OS - Changelog
 
-## Version 0.3.8-dev (Current - In Progress)
+## Version 0.3.9-beta (Current - In Progress)
+- Implemented ATA/IDE disk driver for persistent storage
+- Added partition table support (MBR format)
+- Created filesystem abstraction layer with FAT32 support
+- Implemented disk management commands (disk info, disk part, etc.)
+- Added mounting and unmounting capabilities
+- Extended HAL to include storage devices
+- Added proper error handling in disk operations
+
+## Version 0.3.8-alpha (Previous)
 - Fixed keyboard scancode mapping to correctly interpret user input
 - Fixed scheduler priority boosting to prevent infinite loop
 - Integrated terminal_printf improvements for proper string formatting
@@ -18,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ensured command history and tab completion functionality works properly
 - Overall system stability improvements for day-to-day usage
 
-## Version 0.3.7-dev-v2 (Previous)
+## Version 0.3.7-dev-v2
 - Implemented Hardware Abstraction Layer (HAL) for device independence
 - Created uniform HAL interface for all hardware interactions
 - Implemented timer and keyboard device drivers on HAL
@@ -111,7 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Version 0.3.0
 - Added keyboard input driver with PS/2 support
-- Implemented memory management with kmalloc/kfree functions
+- Implemented memory management with kmalloc/kfree
 - Added simple in-memory file system with basic operations:
   - File creation and deletion
   - Reading and writing to files
