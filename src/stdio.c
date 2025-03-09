@@ -32,9 +32,8 @@ static void print_int(int n) {
     while (i > 0)
         terminal_putchar(buffer[--i]);
 }
-// Add this to src/stdio.c (with your existing code):
 
-// sprintf implementation
+// Implementation of sprintf for string formatting
 int sprintf(char* str, const char* format, ...) {
     va_list args;
     va_start(args, format);
@@ -78,6 +77,9 @@ int sprintf(char* str, const char* format, ...) {
                 }
                 case 's': {
                     const char* s = va_arg(args, const char*);
+                    if (s == NULL) {
+                        s = "(null)";
+                    }
                     while (*s) {
                         str[written++] = *s++;
                     }
@@ -86,10 +88,6 @@ int sprintf(char* str, const char* format, ...) {
                 case 'x': {
                     // Hex format
                     unsigned int val = va_arg(args, unsigned int);
-                    
-                    // Add 0x prefix
-                    str[written++] = '0';
-                    str[written++] = 'x';
                     
                     // Handle special case of 0
                     if (val == 0) {
@@ -143,6 +141,113 @@ int sprintf(char* str, const char* format, ...) {
     va_end(args);
     return written;
 }
+
+// Implementation of snprintf for size-limited string formatting
+int snprintf(char* str, size_t size, const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    
+    if (size == 0) {
+        va_end(args);
+        return 0;
+    }
+    
+    int written = 0;
+    size_t remaining = size - 1; // Reserve space for null terminator
+    
+    for (int i = 0; format[i] != '\0' && remaining > 0; i++) {
+        if (format[i] == '%') {
+            i++;
+            switch (format[i]) {
+                case 'd': {
+                    int val = va_arg(args, int);
+                    
+                    // Handle negative numbers
+                    if (val < 0) {
+                        if (remaining > 0) {
+                            str[written++] = '-';
+                            remaining--;
+                        }
+                        val = -val;
+                    }
+                    
+                    // Handle special case of 0
+                    if (val == 0) {
+                        if (remaining > 0) {
+                            str[written++] = '0';
+                            remaining--;
+                        }
+                        break;
+                    }
+                    
+                    // Convert to string in reverse order
+                    char buffer[16];
+                    int buf_pos = 0;
+                    
+                    while (val > 0) {
+                        buffer[buf_pos++] = '0' + (val % 10);
+                        val /= 10;
+                    }
+                    
+                    // Reverse the digits
+                    while (buf_pos > 0 && remaining > 0) {
+                        str[written++] = buffer[--buf_pos];
+                        remaining--;
+                    }
+                    
+                    break;
+                }
+                case 's': {
+                    const char* s = va_arg(args, const char*);
+                    if (s == NULL) {
+                        s = "(null)";
+                    }
+                    while (*s && remaining > 0) {
+                        str[written++] = *s++;
+                        remaining--;
+                    }
+                    break;
+                }
+                case 'c': {
+                    // Note: char is promoted to int when passed through ...
+                    char c = (char)va_arg(args, int);
+                    if (remaining > 0) {
+                        str[written++] = c;
+                        remaining--;
+                    }
+                    break;
+                }
+                case '%':
+                    if (remaining > 0) {
+                        str[written++] = '%';
+                        remaining--;
+                    }
+                    break;
+                default:
+                    if (remaining > 0) {
+                        str[written++] = '%';
+                        remaining--;
+                    }
+                    if (remaining > 0) {
+                        str[written++] = format[i];
+                        remaining--;
+                    }
+                    break;
+            }
+        } else {
+            str[written++] = format[i];
+            remaining--;
+        }
+    }
+    
+    // Null terminate the string
+    str[written] = '\0';
+    
+    va_end(args);
+    return written;
+}
+
+// Implementation of sscanf for string parsing
 int sscanf(const char* str, const char* format, ...) {
     va_list args;
     va_start(args, format);
@@ -204,8 +309,7 @@ int sscanf(const char* str, const char* format, ...) {
     return count;
 }
 
-// This should go in src/stdio.c
-
+// Terminal printf implementation
 void terminal_printf(const char* format, ...) {
     va_list args;
     va_start(args, format);

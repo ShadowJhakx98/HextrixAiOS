@@ -18,6 +18,7 @@ C_SOURCES = $(SRC_DIR)/kernel.c \
     $(SRC_DIR)/interrupts.c \
     $(SRC_DIR)/shell.c \
     $(SRC_DIR)/stdio.c \
+    $(SRC_DIR)/stdlib.c \
     $(SRC_DIR)/fs.c \
     $(SRC_DIR)/fs_extended.c \
     $(SRC_DIR)/hal_ata.c \
@@ -46,7 +47,7 @@ kernel.bin: $(OBJS)
 
 # Compile C files
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Compile ASM files

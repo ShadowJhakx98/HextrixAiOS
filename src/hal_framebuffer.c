@@ -1,10 +1,12 @@
 // src/hal_framebuffer.c
 #include "hal_framebuffer.h"
+#include "hal.h"  // Added this include for hal_device_t definition
 #include "io.h"
 #include "terminal.h"
 #include "stdio.h"
 #include "kmalloc.h"
 #include "string.h"
+#include <stdlib.h> // Added for abs() function
 
 // VBE (VESA BIOS Extensions) mode information structure
 typedef struct {
@@ -300,7 +302,8 @@ static int fb_ioctl(void* device, uint32_t request, void* arg) {
                 info->height = data->height;
                 info->bits_per_pixel = data->bits_per_pixel;
                 info->pitch = data->pitch;
-                info->framebuffer_size = data->framebuffer_size;
+                info->buffer = data->framebuffer;
+                info->double_buffered = data->double_buffering;
                 return 0;
             }
             break;

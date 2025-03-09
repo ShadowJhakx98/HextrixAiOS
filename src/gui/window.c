@@ -52,7 +52,7 @@ static void draw_window(window_t* window);
 static void draw_title_bar(window_t* window);
 static void draw_borders(window_t* window);
 static void draw_client_area(window_t* window);
-static int handle_mouse_event(mouse_event_t* event);
+static void handle_mouse_event(mouse_event_t* event);
 static window_t* find_window_at(int16_t x, int16_t y);
 static int is_point_in_title_bar(window_t* window, int16_t x, int16_t y);
 static int is_point_in_client_area(window_t* window, int16_t x, int16_t y);
@@ -879,9 +879,9 @@ static void draw_controls(window_t* window) {
         control = control->next;
     }
 }
-// Handle mouse events
-static int handle_mouse_event(mouse_event_t* event) {
-    if (!event) return 0;
+// Fixed function with void return type to match mouse_event_handler_t:
+static void handle_mouse_event(mouse_event_t* event) {
+    if (!event) return;
     
     // Get mouse state
     int16_t x = event->x;
@@ -955,7 +955,7 @@ static int handle_mouse_event(mouse_event_t* event) {
             }
         }
         
-        return 1;
+        return;  // Event handled
     }
     
     // Find window under mouse cursor
@@ -988,7 +988,7 @@ static int handle_mouse_event(mouse_event_t* event) {
             // Send control click message to window
             window_send_message(window, WM_CONTROL, control->id, 0);
             
-            return 1;
+            return;  // Event handled
         }
     }
     
@@ -1029,7 +1029,7 @@ static int handle_mouse_event(mouse_event_t* event) {
             
             // If window handles the event, return immediately
             if (window->event_handler && window->event_handler(window, &msg)) {
-                return 1;
+                return;  // Event handled
             }
         }
     }
@@ -1056,7 +1056,7 @@ static int handle_mouse_event(mouse_event_t* event) {
                         y >= button_y && y < button_y + BUTTON_WIDTH) {
                         // Close button clicked
                         window_send_message(window, WM_CLOSE, 0, 0);
-                        return 1;
+                        return;  // Event handled
                     }
                     
                     button_x -= BUTTON_WIDTH + 2;
@@ -1076,7 +1076,7 @@ static int handle_mouse_event(mouse_event_t* event) {
                         } else {
                             window_set_state(window, WINDOW_STATE_MAXIMIZED);
                         }
-                        return 1;
+                        return;  // Event handled
                     }
                     
                     button_x -= BUTTON_WIDTH + 2;
@@ -1092,7 +1092,7 @@ static int handle_mouse_event(mouse_event_t* event) {
                         y >= button_y && y < button_y + BUTTON_WIDTH) {
                         // Minimize button clicked
                         window_set_state(window, WINDOW_STATE_MINIMIZED);
-                        return 1;
+                        return;  // Event handled
                     }
                 }
                 
@@ -1115,8 +1115,9 @@ static int handle_mouse_event(mouse_event_t* event) {
         }
     }
     
-    return 0;
+    return;  // No event handled
 }
+
 // Find the window at a given screen position
 static window_t* find_window_at(int16_t x, int16_t y) {
     // Iterate through windows in z-order (front to back)
@@ -1134,9 +1135,8 @@ static window_t* find_window_at(int16_t x, int16_t y) {
         }
     }
     
-    return NULL;
+    return NULL;  // No window found at this position
 }
-
 // Find control at given client coordinates
 static window_control_t* find_control_at(window_t* window, uint32_t x, uint32_t y) {
     if (!window) return NULL;
@@ -1153,7 +1153,6 @@ static window_control_t* find_control_at(window_t* window, uint32_t x, uint32_t 
     
     return NULL;
 }
-
 // Check if point is in the title bar
 static int is_point_in_title_bar(window_t* window, int16_t x, int16_t y) {
     if (!window || (window->style & WINDOW_STYLE_NOTITLE)) return 0;

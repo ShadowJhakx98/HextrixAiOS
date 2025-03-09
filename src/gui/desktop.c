@@ -7,7 +7,6 @@
 #include "hal_keyboard.h"
 #include "hal_timer.h"
 #include "terminal.h"
-#include "stdio.h"
 #include "kmalloc.h"
 #include "string.h"
 
@@ -75,7 +74,6 @@ static int welcome_window_handler(window_t* window, window_message_t* msg);
 static int message_window_handler(window_t* window, window_message_t* msg);
 static void show_start_menu(uint32_t x, uint32_t y);
 static void update_clock(void);
-// Initialize the desktop environment
 int desktop_init(void) {
     // Initialize window manager
     if (wm_init() != 0) {
@@ -102,7 +100,7 @@ int desktop_init(void) {
     desktop_add_icon("Settings", ICON_MARGIN_X, ICON_MARGIN_Y + ICON_SPACING_Y * 3, FB_COLOR_PURPLE, desktop_open_settings);
     
     terminal_writestring("Desktop environment initialized\n");
-    return;
+    return 0;  // Return success
 }
 
 // Process desktop events
@@ -168,7 +166,7 @@ void desktop_set_theme(uint32_t theme) {
     }
 }
 
-// Main desktop loop
+// Fix for desktop_run() function - removing incorrect return value
 void desktop_run(void) {
     if (desktop_init() != 0) {
         terminal_writestring("Failed to initialize desktop environment\n");
@@ -205,6 +203,7 @@ void desktop_run(void) {
         // Small delay to reduce CPU usage
         hal_timer_delay(10); // Better than busy waiting
     }
+    // No return statement - void function
 }
 // Draw the desktop background and elements
 static void draw_desktop(void) {
@@ -288,19 +287,20 @@ static void draw_icons(void) {
 }
 
 // Update the taskbar clock
+// Fixed update_clock function - using the correct seconds variable
 static void update_clock(void) {
     // Get current time from system timer
     uint32_t current_time = hal_timer_get_ticks() / 100; // Convert to seconds
     
-    // Calculate hours and minutes
+    // Calculate hours and minutes (seconds is actually used here)
     uint32_t seconds = current_time % 60;
     uint32_t minutes = (current_time / 60) % 60;
     uint32_t hours = (current_time / 3600) % 24;
     
     // Only update if changed
-    static uint32_t last_minutes = 0xFFFFFFFF;
-    if (minutes != last_minutes) {
-        last_minutes = minutes;
+    static uint32_t last_update = 0xFFFFFFFF;
+    if (seconds != last_update) {
+        last_update = seconds;
         sprintf(taskbar.clock_text, "%02d:%02d", hours, minutes);
     }
 }
