@@ -9,6 +9,7 @@ OBJ_DIR = build
 
 # Regular build sources
 ASM_SOURCES = $(SRC_DIR)/boot.asm $(SRC_DIR)/test_stubs.asm $(SRC_DIR)/context_switch.asm
+# Add these to the C_SOURCES variable in the makefile
 C_SOURCES = $(SRC_DIR)/kernel.c \
     $(SRC_DIR)/terminal.c \
     $(SRC_DIR)/string.c \
@@ -18,6 +19,8 @@ C_SOURCES = $(SRC_DIR)/kernel.c \
     $(SRC_DIR)/shell.c \
     $(SRC_DIR)/stdio.c \
     $(SRC_DIR)/fs.c \
+    $(SRC_DIR)/fs_extended.c \
+    $(SRC_DIR)/hal_ata.c \
     $(SRC_DIR)/process.c \
     $(SRC_DIR)/scheduler.c \
     $(SRC_DIR)/system_utils.c \

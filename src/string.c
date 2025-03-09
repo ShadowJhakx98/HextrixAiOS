@@ -85,6 +85,32 @@ int strncmp(const char* s1, const char* s2, size_t n) {
     return 0;
 }
 
+// Add to string.c
+int atoi(const char* str) {
+    int value = 0;
+    int sign = 1;
+    
+    // Skip leading whitespace
+    while (*str == ' ' || *str == '\t')
+        str++;
+    
+    // Handle sign
+    if (*str == '-') {
+        sign = -1;
+        str++;
+    } else if (*str == '+') {
+        str++;
+    }
+    
+    // Convert digits
+    while (*str >= '0' && *str <= '9') {
+        value = value * 10 + (*str - '0');
+        str++;
+    }
+    
+    return value * sign;
+}
+
 // Find first occurrence of character c in string s
 char* strchr(const char* s, int c) {
     while (*s != '\0') {
@@ -98,7 +124,6 @@ char* strchr(const char* s, int c) {
     
     return NULL;
 }
-
 // Concatenate src to dest
 char* strcat(char* dest, const char* src) {
     char* original_dest = dest;

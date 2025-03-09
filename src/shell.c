@@ -11,7 +11,8 @@
 #include "process.h"
 #include "scheduler.h"
 #include <stdarg.h>
-
+#include "fs_extended.h"
+#include "hal_ata.h"
 
 
 // Shell configuration
@@ -50,6 +51,9 @@ typedef struct {
 static int cmd_help(int argc, char** argv);
 static int cmd_clear(int argc, char** argv);
 static int cmd_echo(int argc, char** argv);
+static int cmd_disk(int argc, char** argv);
+static int cmd_mount(int argc, char** argv);
+static int cmd_umount(int argc, char** argv);
 static int cmd_ls(int argc, char** argv);
 static int cmd_cat(int argc, char** argv);
 static int cmd_write(int argc, char** argv);
@@ -81,6 +85,10 @@ static int cmd_exit(int argc, char** argv);
 static command_t commands[MAX_COMMANDS] = {
     {"help", "Show available commands", cmd_help},
     {"clear", "Clear the screen", cmd_clear},
+	// Add these entries to the commands array in shell.c
+	{"disk", "Disk and partition management", cmd_disk},
+	{"mount", "Mount a file system", cmd_mount},
+	{"umount", "Unmount a file system", cmd_umount},
     {"echo", "Display text", cmd_echo},
     {"ls", "List files in directory", cmd_ls},
     {"cat", "Display file contents", cmd_cat},
@@ -1200,6 +1208,96 @@ static int cmd_exit(int argc, char** argv) {
     shell_enhanced_init();
     
     return 0;
+}
+
+// Add these command handlers to src/shell.c
+
+static int cmd_disk(int argc, char** argv) {
+    if (argc < 2) {
+        terminal_writestring("Usage: disk <command> [args]\n");
+        terminal_writestring("Commands:\n");
+        terminal_writestring("  info - Display disk information\n");
+        terminal_writestring("  part - Display partition table\n");
+        terminal_writestring("  mkpart <drive> <start> <size> <type> - Create a partition\n");
+        terminal_writestring("  rmpart <drive> <partition> - Delete a partition\n");
+        terminal_writestring("  format <drive> <partition> <type> - Format a partition\n");
+        return 1;
+    }
+    
+    if (strcmp(argv[1], "info") == 0) {
+        hal_ata_print_info();
+    }
+    else if (strcmp(argv[1], "part") == 0) {
+        uint8_t drive = 0;
+        if (argc > 2) {
+            drive = atoi(argv[2]);
+        }
+        fs_print_partitions(drive);
+    }
+    else if (strcmp(argv[1], "mkpart") == 0) {
+        if (argc < 6) {
+            terminal_writestring("Usage: disk mkpart <drive> <start> <size> <type>\n");
+            return 1;
+        }
+        uint8_t drive = atoi(argv[2]);
+        uint32_t start = atoi(argv[3]);
+        uint32_t size = atoi(argv[4]);
+        uint8_t type = atoi(argv[5]);
+        
+        fs_add_partition(drive, start, size * 2048, type); // size in MB to sectors
+    }
+    else if (strcmp(argv[1], "rmpart") == 0) {
+        if (argc < 4) {
+            terminal_writestring("Usage: disk rmpart <drive> <partition>\n");
+            return 1;
+        }
+        uint8_t drive = atoi(argv[2]);
+        uint8_t partition = atoi(argv[3]);
+        
+        fs_delete_partition(drive, partition);
+    }
+    else if (strcmp(argv[1], "format") == 0) {
+        if (argc < 5) {
+            terminal_writestring("Usage: disk format <drive> <partition> <type>\n");
+            terminal_writestring("Types: 1=FAT16, 2=FAT32, 3=EXT2\n");
+            return 1;
+        }
+        uint8_t drive = atoi(argv[2]);
+        uint8_t partition = atoi(argv[3]);
+        uint8_t type = atoi(argv[4]);
+        
+        fs_format_partition(drive, partition, type);
+    }
+    else {
+        terminal_writestring("Unknown disk command\n");
+        return 1;
+    }
+    
+    return 0;
+}
+
+static int cmd_mount(int argc, char** argv) {
+    if (argc < 4) {
+        terminal_writestring("Usage: mount <mount_point> <drive> <partition>\n");
+        return 1;
+    }
+    
+    const char* mount_point = argv[1];
+    uint8_t drive = atoi(argv[2]);
+    uint8_t partition = atoi(argv[3]);
+    
+    return fs_mount(mount_point, drive, partition);
+}
+
+static int cmd_umount(int argc, char** argv) {
+    if (argc < 2) {
+        terminal_writestring("Usage: umount <mount_point>\n");
+        return 1;
+    }
+    
+    const char* mount_point = argv[1];
+    
+    return fs_unmount(mount_point);
 }
 
 static int cmd_help(int argc, char** argv) {

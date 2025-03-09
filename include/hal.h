@@ -18,6 +18,22 @@ int hal_init_devices(void);
 #define HAL_MODE_POLLING    0
 #define HAL_MODE_INTERRUPT  1
 
+// Add to include/hal.h in the appropriate sections
+
+// HAL device types
+#define HAL_DEVICE_TIMER    1
+#define HAL_DEVICE_KEYBOARD 2
+#define HAL_DEVICE_DISPLAY  3
+#define HAL_DEVICE_STORAGE  4
+#define HAL_DEVICE_ATA      5  // Add this line
+
+// Function declarations for ATA
+void hal_ata_init(void);
+int hal_ata_detect_devices(void);
+int hal_ata_read_sectors(uint8_t drive, uint32_t lba, uint8_t sector_count, void* buffer);
+int hal_ata_write_sectors(uint8_t drive, uint32_t lba, uint8_t sector_count, const void* buffer);
+int hal_ata_identify(uint8_t drive, void* buffer);
+void hal_ata_print_info(void);
 // Generic HAL device structure
 typedef struct {
     uint32_t type;         // Device type
