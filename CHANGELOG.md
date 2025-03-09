@@ -7,7 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Hextrix OS - Changelog
 
-## Version 0.3.9-beta (Current - In Progress)
+## Version 0.4.0-beta (Current - In Progress)
+- Implemented framebuffer graphics driver for GUI rendering
+- Added PS/2 mouse driver with event handling capabilities
+- Created comprehensive window management system with:
+  - Draggable, resizable windows with title bars
+  - Z-order management for overlapping windows 
+  - Client/server message passing architecture
+  - Automated repainting and efficient region updates
+- Implemented UI controls framework with buttons, labels, textboxes, etc.
+- Added desktop environment with:
+  - Desktop icons and taskbar
+  - System clock display
+  - Application launcher functionality
+- Created fundamental GUI applications:
+  - File browser
+  - Terminal emulator
+  - Text editor
+  - Settings manager
+- Implemented event-driven programming model for GUI applications
+- Added double-buffered rendering for smooth animations
+- Integrated GUI system with existing HAL architecture
+
+## Version 0.3.9-beta (Previous)
 - Implemented ATA/IDE disk driver for persistent storage
 - Added partition table support (MBR format)
 - Created filesystem abstraction layer with FAT32 support
@@ -16,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Extended HAL to include storage devices
 - Added proper error handling in disk operations
 
-## Version 0.3.8-alpha (Previous)
+## Version 0.3.8-alpha
 - Fixed keyboard scancode mapping to correctly interpret user input
 - Fixed scheduler priority boosting to prevent infinite loop
 - Integrated terminal_printf improvements for proper string formatting
