@@ -14,8 +14,8 @@ This roadmap outlines the development trajectory for the HextrixAI project, comb
 - ✅ Command-line shell with basic commands
 - ✅ Task scheduler with simple multitasking
 
-## Phase 2: Core Systems
-*Status: Mostly Complete*
+## Phase 2: Core Systems ✅
+*Status: Completed*
 
 ### Initial Improvements
 - ✅ Enhanced process scheduling
@@ -32,19 +32,19 @@ This roadmap outlines the development trajectory for the HextrixAI project, comb
   - ✅ Kernel/user space separation
   - ✅ Memory access validation
   - ✅ Page fault handler framework
-- ✅ Reverted to stable polling-based I/O model
-  - ✅ Cleaned up experimental interrupt code
-  - ✅ Enhanced polling efficiency
-  - ✅ Created foundation for future HAL implementation
-
-### Hardware Abstraction Layer (HAL) ✅
-- ✅ Define HAL interfaces
-- ✅ Implement device abstraction
-- ✅ Create uniform hardware interaction API
-- ✅ Implement timer device through HAL
-- ✅ Implement keyboard device through HAL
-- ✅ Create unified driver model
-- ✅ Add hardware detection mechanisms
+- ✅ Hardware Abstraction Layer (HAL)
+  - ✅ Define HAL interfaces
+  - ✅ Implement device abstraction
+  - ✅ Create uniform hardware interaction API
+  - ✅ Implement timer device through HAL
+  - ✅ Implement keyboard device through HAL
+  - ✅ Create unified driver model
+  - ✅ Add hardware detection mechanisms
+- ✅ Extended Storage Support
+  - ✅ ATA/IDE disk driver implementation
+  - ✅ Disk partitioning support
+  - ✅ MBR partition table handling
+  - ✅ FAT32 filesystem structure
 
 ### UI & Shell Enhancements ✅
 - ✅ Fix keyboard scancode mapping for reliable input
@@ -78,46 +78,35 @@ This roadmap outlines the development trajectory for the HextrixAI project, comb
 - ✅ File permissions enforcement
 - ✅ Metadata support
 - 🟡 Directory navigation enhancements
+- 🟡 Physical disk storage support
+- 🟡 Partition management
 - 🔲 Full POSIX-compatible file operations
 - 🔲 File search capabilities
 - 🔲 File type detection
 
-## Immediate Next Steps
+## Phase 4: GUI and Networking
+*Status: Planned*
 
-1. **Extend Shell Functionality**
-   - Add support for command piping
-   - Implement I/O redirection
-   - Create expanded built-in commands
-   - Add scripting capabilities
+### Graphical User Interface 🔲
+- 🔲 Framebuffer graphics driver
+- 🔲 Basic drawing primitives
+- 🔲 Window management system
+- 🔲 Simple widget toolkit
+- 🔲 Desktop environment
 
-2. **Enhance File System**
-   - Implement proper disk-based file system
-   - Add support for mounting and unmounting
-   - Create file system utilities (check, format, repair)
-   - Implement proper file locks for concurrency
+### Networking Stack 🔲
+- 🔲 NIC driver implementation
+- 🔲 Basic network protocols (Ethernet, ARP)
+- 🔲 IP network stack
+- 🔲 TCP/UDP implementation
+- 🔲 Basic socket API
 
-3. **Expand Driver Support**
-   - Create display driver with graphics capabilities
-   - Add network interface drivers
-   - Implement sound device support
-   - Create device discovery mechanism
+## Phase 5: AI Integration
+*Status: Planned*
 
-4. **System Call Interface**
-   - Define system call interface
-   - Create syscall dispatcher
-   - Implement core system calls
-   - Add syscall validation
-
-## Future Milestones
-
-### Phase 4: Application Layer
-- Application loading and execution
-- Dynamic library support
-- Window manager and GUI system
-- Network stack implementation
-
-### Phase 5: AI Integration
-- AI runtime environment
-- Model loading and processing
-- Integration with system services
-- Multi-modal input/output processing
+### AI System Translation 🔲
+- 🔲 Rewrite Python AI logic in C
+- 🔲 Implement UI components in C
+- 🔲 Create language model interfaces
+- 🔲 Optimize for embedded operation
+- 🔲 Integrate with OS services
