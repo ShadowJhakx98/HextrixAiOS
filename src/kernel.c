@@ -10,6 +10,7 @@
 #include "stdio.h"  // Added for terminal_printf
 #include "system_utils.h" // Added for system_halt
 #include "hal.h" // Added for HAL functions
+#include "gui/desktop.h" // Add this at the top of the file
 
 // Demo task 1
 static void demo_task1(void) {
@@ -90,7 +91,7 @@ void kernel_main(unsigned int magic, unsigned int addr) {
     terminal_initialize();
     
     // Print welcome message
-    terminal_writestring("Initializing Hextrix OS (32-bit) v0.3.6-dev - HAL Edition\n");
+    terminal_writestring("Initializing Hextrix OS (32-bit) v0.4.0-beta - GUI Edition\n");
     
     // Check multiboot magic
     if (magic != 0x2BADB002) {
@@ -128,11 +129,15 @@ void kernel_main(unsigned int magic, unsigned int addr) {
     scheduler_init();
     terminal_writestring("Process scheduler initialized\n");
     
-    // Initialize shell
-    shell_init();
-    terminal_writestring("Shell initialized\n");
+    // Launch the desktop GUI
+    terminal_writestring("Starting GUI desktop environment...\n");
+    desktop_run();
     
-    // Main loop
+    // If desktop_run() ever returns, fall back to the shell
+    terminal_writestring("GUI desktop exited. Falling back to shell.\n");
+    shell_init();
+    
+    // Main loop (fallback if GUI fails)
     while (1) {
         // Poll the timer
         hal_timer_poll();

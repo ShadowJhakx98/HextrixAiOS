@@ -3,10 +3,6 @@
 #define HAL_FRAMEBUFFER_H
 
 #include <stdint.h>
-#include "hal.h"
-
-// Add this to include/hal.h (device types section)
-// #define HAL_DEVICE_FRAMEBUFFER 5
 
 // IOCTL commands for framebuffer
 #define FB_IOCTL_GET_INFO           0
@@ -34,13 +30,14 @@
 #define FB_COLOR_BROWN       0xFF8B4513
 #define FB_COLOR_TRANSPARENT 0x00000000
 
-// Framebuffer information structure
-typedef struct {
-    uint32_t width;               // Width in pixels
-    uint32_t height;              // Height in pixels
-    uint32_t pitch;               // Bytes per scanline
-    uint8_t bits_per_pixel;       // Bits per pixel
-    uint32_t framebuffer_size;    // Size of framebuffer in bytes
+// Structure for framebuffer information
+typedef struct fb_info {
+    uint32_t width;           // Framebuffer width in pixels
+    uint32_t height;          // Framebuffer height in pixels
+    uint32_t bits_per_pixel;  // Bits per pixel
+    uint32_t pitch;           // Bytes per row
+    void*    buffer;          // Pointer to the framebuffer memory
+    uint8_t  double_buffered; // Flag indicating if double buffering is enabled
 } fb_info_t;
 
 // Resolution structure

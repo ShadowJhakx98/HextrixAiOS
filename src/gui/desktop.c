@@ -1,4 +1,5 @@
 // src/gui/desktop.c
+#include <stdio.h>
 #include "gui/desktop.h"
 #include "gui/window.h"
 #include "hal_framebuffer.h"
@@ -9,6 +10,8 @@
 #include "stdio.h"
 #include "kmalloc.h"
 #include "string.h"
+
+
 
 // Maximum number of desktop icons
 #define MAX_DESKTOP_ICONS 16
@@ -29,6 +32,7 @@
 #define TASKBAR_START_BUTTON_WIDTH 80
 
 // Desktop themes
+#define MAX_COMMAND_LENGTH 256
 #define THEME_BLUE 0
 #define THEME_GREEN 1
 #define THEME_TEAL 2
@@ -49,6 +53,8 @@ static window_t* terminal_window = NULL;
 static window_t* text_editor_window = NULL;
 static window_t* settings_window = NULL;
 static window_t* start_menu = NULL;
+// Add this with other global window pointers
+static window_t* active_window = NULL;  // Currently active window
 
 // Desktop state
 static uint8_t desktop_effects_enabled = 0;
@@ -58,7 +64,7 @@ static uint8_t current_theme = THEME_TEAL;
 static void draw_desktop(void);
 static void draw_taskbar(void);
 static void draw_icons(void);
-static int desktop_mouse_handler(mouse_event_t* event);
+static void desktop_mouse_handler(mouse_event_t* event);
 static int file_browser_event_handler(window_t* window, window_message_t* msg);
 static int terminal_event_handler(window_t* window, window_message_t* msg);
 static int text_editor_event_handler(window_t* window, window_message_t* msg);
@@ -96,7 +102,7 @@ int desktop_init(void) {
     desktop_add_icon("Settings", ICON_MARGIN_X, ICON_MARGIN_Y + ICON_SPACING_Y * 3, FB_COLOR_PURPLE, desktop_open_settings);
     
     terminal_writestring("Desktop environment initialized\n");
-    return 0;
+    return;
 }
 
 // Process desktop events
@@ -531,7 +537,7 @@ static void show_start_menu(uint32_t x, uint32_t y) {
     window_activate(start_menu);
 }
 // Main desktop mouse handler - handles clicks on desktop and taskbar
-static int desktop_mouse_handler(mouse_event_t* event) {
+static void desktop_mouse_handler(mouse_event_t* event) {
     // Get screen dimensions
     fb_info_t info;
     fb_get_info(&info);
@@ -547,7 +553,7 @@ static int desktop_mouse_handler(mouse_event_t* event) {
                 
                 // Show start menu
                 show_start_menu(5, info.height - taskbar.height - 180);
-                return 1;
+                return;
             }
             
             // Check window buttons on taskbar
@@ -559,7 +565,7 @@ static int desktop_mouse_handler(mouse_event_t* event) {
                     event->y < info.height - taskbar.height + taskbar.height - 5) {
                     
                     window_activate(file_browser_window);
-                    return 1;
+                    return;
                 }
                 btn_x += TASKBAR_BUTTON_WIDTH + 5;
             }
@@ -570,7 +576,7 @@ static int desktop_mouse_handler(mouse_event_t* event) {
                     event->y < info.height - taskbar.height + taskbar.height - 5) {
                     
                     window_activate(terminal_window);
-                    return 1;
+                    return;
                 }
                 btn_x += TASKBAR_BUTTON_WIDTH + 5;
             }
@@ -581,7 +587,7 @@ static int desktop_mouse_handler(mouse_event_t* event) {
                     event->y < info.height - taskbar.height + taskbar.height - 5) {
                     
                     window_activate(text_editor_window);
-                    return 1;
+                    return;
                 }
                 btn_x += TASKBAR_BUTTON_WIDTH + 5;
             }
@@ -592,11 +598,10 @@ static int desktop_mouse_handler(mouse_event_t* event) {
                     event->y < info.height - taskbar.height + taskbar.height - 5) {
                     
                     window_activate(settings_window);
-                    return 1;
+                    return;
                 }
             }
-            
-            return 1; // Clicked on taskbar but not on any button
+			return;
         }
         
         // Check if clicked on a desktop icon
@@ -612,13 +617,13 @@ static int desktop_mouse_handler(mouse_event_t* event) {
                     icon->action();
                 }
                 
-                return 1;  // Event handled
+                return;  // Event handled
             }
         }
     }
     
     // If we get here, event wasn't handled by desktop
-    return 0;
+    return;
 }
 
 // File browser window event handler
@@ -1242,49 +1247,3 @@ static int message_window_handler(window_t* window, window_message_t* msg) {
     
     return 0;
 }
-// desktop.h additions
-
-// Terminal data structure
-typedef struct {
-    char command[256];
-    int command_length;
-    int cursor_x;
-    int cursor_y;
-    uint8_t cursor_visible;
-} terminal_data_t;
-
-#define MAX_COMMAND_LENGTH 256
-
-// Desktop icon structure
-typedef struct {
-    char name[32];
-    uint32_t x;
-    uint32_t y;
-    uint32_t width;
-    uint32_t height;
-    uint32_t icon_color;
-    void (*action)(void);
-} desktop_icon_t;
-
-// Desktop taskbar structure
-typedef struct {
-    uint32_t height;
-    uint32_t color;
-    uint32_t text_color;
-    char clock_text[6]; // Format: "HH:MM\0"
-} desktop_taskbar_t;
-
-// Function declarations
-int desktop_init(void);
-void desktop_process_events(void);
-void desktop_update(void);
-int desktop_add_icon(const char* name, uint32_t x, uint32_t y, uint32_t color, void (*action)(void));
-void desktop_set_theme(uint32_t theme);
-void desktop_run(void);
-
-// Application launcher functions
-void desktop_open_file_browser(void);
-void desktop_open_terminal(void);
-void desktop_open_text_editor(void);
-void desktop_open_settings(void);
-void desktop_show_system_info(void);

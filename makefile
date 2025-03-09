@@ -27,7 +27,11 @@ C_SOURCES = $(SRC_DIR)/kernel.c \
     $(SRC_DIR)/hal.c \
     $(SRC_DIR)/hal_timer.c \
     $(SRC_DIR)/hal_keyboard.c \
-    $(SRC_DIR)/hal_storage.c
+    $(SRC_DIR)/hal_storage.c \
+    $(SRC_DIR)/gui/desktop.c \
+    $(SRC_DIR)/gui/window.c \
+    $(SRC_DIR)/hal_framebuffer.c \
+    $(SRC_DIR)/hal_mouse.c
 # Generate object file lists
 C_OBJS = $(patsubst $(SRC_DIR)/%.c,$(OBJ_DIR)/%.o,$(C_SOURCES))
 ASM_OBJS = $(patsubst $(SRC_DIR)/%.asm,$(OBJ_DIR)/%.o,$(ASM_SOURCES))

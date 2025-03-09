@@ -44,6 +44,7 @@
 #define WM_CHAR        0x0011
 #define WM_COMMAND     0x0012
 #define WM_CONTROL     0x0013  // Control-related message
+#define WM_TIMER       0x0014  // Timer event
 #define WM_USER        0x0400  // Base value for user-defined messages
 
 // Maximum number of windows

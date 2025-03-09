@@ -1,4 +1,4 @@
-// src/hal.c - add or modify to include hal_init_devices
+// src/hal.c
 #include "hal.h"
 #include "terminal.h"
 #include "string.h"
@@ -53,10 +53,26 @@ hal_device_t* hal_get_device(uint32_t type) {
 // Forward declarations for device initializers
 extern int hal_timer_init(void);
 extern int hal_keyboard_init(void);
+extern int hal_framebuffer_init(void);
+extern int hal_mouse_init(void);
 
 // Initialize all HAL devices
 int hal_init_devices(void) {
     int status = 0;
+    
+    // Initialize framebuffer first (needed for GUI)
+    status = hal_framebuffer_init();
+    if (status != 0) {
+        terminal_writestring("Failed to initialize HAL framebuffer device\n");
+        return status;
+    }
+    
+    // Initialize mouse (needed for GUI interaction)
+    status = hal_mouse_init();
+    if (status != 0) {
+        terminal_writestring("Failed to initialize HAL mouse device\n");
+        // Continue even if mouse fails - GUI might still work with keyboard only
+    }
     
     // Initialize timer
     status = hal_timer_init();
@@ -72,5 +88,36 @@ int hal_init_devices(void) {
         return status;
     }
     
+    terminal_writestring("All HAL devices initialized successfully\n");
     return 0;
+}
+
+// Generic device operations wrapper functions
+
+int hal_device_read(hal_device_t* device, void* buffer, uint32_t size) {
+    if (!device || !device->read) {
+        return -1;
+    }
+    return device->read(device, buffer, size);
+}
+
+int hal_device_write(hal_device_t* device, const void* buffer, uint32_t size) {
+    if (!device || !device->write) {
+        return -1;
+    }
+    return device->write(device, buffer, size);
+}
+
+int hal_device_ioctl(hal_device_t* device, uint32_t request, void* arg) {
+    if (!device || !device->ioctl) {
+        return -1;
+    }
+    return device->ioctl(device, request, arg);
+}
+
+int hal_device_close(hal_device_t* device) {
+    if (!device || !device->close) {
+        return -1;
+    }
+    return device->close(device);
 }

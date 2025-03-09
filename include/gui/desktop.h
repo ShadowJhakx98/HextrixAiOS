@@ -5,6 +5,18 @@
 #include <stdint.h>
 #include "gui/window.h"
 
+// Maximum command length for terminal
+#define MAX_COMMAND_LENGTH 256
+
+// Terminal data structure
+typedef struct {
+    char command[MAX_COMMAND_LENGTH];
+    int command_length;
+    int cursor_x;
+    int cursor_y;
+    uint8_t cursor_visible;
+} terminal_data_t;
+
 // Desktop icon structure
 typedef struct {
     char name[32];        // Icon name
@@ -35,6 +47,9 @@ void desktop_update(void);
 
 // Add an icon to the desktop
 int desktop_add_icon(const char* name, uint32_t x, uint32_t y, uint32_t color, void (*action)(void));
+
+// Set the desktop theme
+void desktop_set_theme(uint32_t theme);
 
 // Open the file browser window
 void desktop_open_file_browser(void);

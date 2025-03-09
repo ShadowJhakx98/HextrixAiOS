@@ -3,7 +3,6 @@
 #define HAL_MOUSE_H
 
 #include <stdint.h>
-#include "hal.h"
 
 // Add this to include/hal.h (device types section)
 // #define HAL_DEVICE_MOUSE 6
