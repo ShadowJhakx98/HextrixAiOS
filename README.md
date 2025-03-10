@@ -24,9 +24,6 @@ The project is in active development with significant progress in core OS founda
 - ✅ Functional GUI rendering with desktop, taskbar, and window display
 
 ### Current Work in Progress
-- 🚧 Simplifying and stabilizing the framebuffer initialization in QEMU to prevent hangs during memory allocation
-- 🚧 Optimizing graphical output to display content on the QEMU screen instead of a blank black screen
-- 🚧 Debugging memory allocation issues in the kernel to ensure reliable framebuffer operation
 - 🟡 Completing Standard Library implementation (e.g., string manipulation, time functions)
 - 🟡 Enhancing GUI performance (e.g., rendering pipeline, window management efficiency)
 
