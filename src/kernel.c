@@ -1,5 +1,6 @@
 // src/kernel.c
 #include <stdbool.h>
+#include <stdint.h>
 #include "terminal.h"
 #include "kmalloc.h"
 #include "interrupts.h"
@@ -12,6 +13,9 @@
 #include "system_utils.h"
 #include "hal.h"
 #include "gui/desktop.h"
+
+// Global stack canary variable
+uint32_t __stack_canary = 0xDEADBEEF;
 
 // Function declarations with correct return types
 void serial_print(const char *str);
@@ -57,38 +61,52 @@ static void print_hex(unsigned int num) {
     serial_print(output);
 }
 
-// Safe GUI initialization wrapper
+// In kernel.c
 bool safe_desktop_init() {
-    SERIAL_DEBUG("Attempting GUI initialization...\n");
-    
+    SERIAL_DEBUG("safe_desktop_init: Attempting GUI initialization...\n"); // DEBUG - ENTRY
+
     // Check framebuffer readiness
     if (!hal_framebuffer_is_ready()) {
-        SERIAL_DEBUG("Framebuffer not ready. GUI initialization failed.\n");
+        SERIAL_DEBUG("safe_desktop_init: Framebuffer not ready. GUI initialization failed.\n");
         return false;
     }
-    SERIAL_DEBUG("Framebuffer is ready for GUI initialization.\n");
-    
-    // Try to run desktop and check result
-    SERIAL_DEBUG("Calling desktop_run()...\n");
-    int gui_result = desktop_run();
-    SERIAL_DEBUG("desktop_run() returned: ");
-    print_hex(gui_result);
+    SERIAL_DEBUG("safe_desktop_init: Framebuffer is ready for GUI initialization.\n");
+
+    // Initialize desktop components
+    SERIAL_DEBUG("safe_desktop_init: Calling desktop_init()...\n");
+    int init_result = desktop_init(); // <-- CRUCIAL: CALL TO desktop_init()
+    SERIAL_DEBUG("safe_desktop_init: desktop_init() returned: ");
+    print_hex(init_result);
     SERIAL_DEBUG("\n");
-    
-    if (gui_result != 0) {
-        SERIAL_DEBUG("Desktop initialization failed with error code.\n");
+
+    if (init_result != 0) {
+        SERIAL_DEBUG("safe_desktop_init: Desktop initialization failed with error code.\n");
         return false;
     }
-    
-    SERIAL_DEBUG("GUI initialized successfully.\n");
-    return true;
+
+    // Start desktop environment
+    SERIAL_DEBUG("safe_desktop_init: Calling desktop_run()...\n");
+    desktop_run(); // <-- CRUCIAL: CALL TO desktop_run() AFTER desktop_init() succeeds
+    SERIAL_DEBUG("safe_desktop_init: desktop_run() returned unexpectedly!\n");
+    return false;
 }
 
+// Fallback shell loop with safety checks
 // Fallback shell loop with safety checks
 void fallback_shell_loop() {
     SERIAL_DEBUG("Entering fallback shell loop...\n");
     
     while (1) {
+        // Stack canary check
+        if (__stack_canary != 0xDEADBEEF) {
+            // Check stack canary value
+            SERIAL_DEBUG("CRITICAL: Stack overflow detected!\n");
+            SERIAL_DEBUG("Stack canary value corrupted! Expected 0xDEADBEEF, but found: ");
+            print_hex(__stack_canary);
+            SERIAL_DEBUG("\n");
+            system_halt(); // Halt system to prevent further damage
+        }
+        
         // Perform safety checks
         if (!hal_is_system_stable()) {
             SERIAL_DEBUG("System instability detected. Halting.\n");
@@ -114,7 +132,9 @@ void fallback_shell_loop() {
         scheduler_yield();
     }
 }
+extern uint32_t __stack_canary; // Declare stack canary symbol
 
+// Enhanced kernel main with robust error handling
 // Enhanced kernel main with robust error handling
 void kernel_main(unsigned int magic, unsigned int addr) {
     // Early serial debugging initialization
@@ -124,6 +144,12 @@ void kernel_main(unsigned int magic, unsigned int addr) {
     // Initialize terminal
     terminal_initialize();
     SERIAL_DEBUG("Terminal initialized.\n");
+    
+    // Stack canary initialization
+    __stack_canary = 0xDEADBEEF; // Initialize stack canary value
+    SERIAL_DEBUG("Stack canary initialized to: ");
+    print_hex(__stack_canary);
+    SERIAL_DEBUG("\n");
     
     // Multiboot validation with detailed logging
     if (magic != 0x2BADB000) {
@@ -219,6 +245,7 @@ void kernel_main(unsigned int magic, unsigned int addr) {
         fallback_shell_loop();
     } else {
         SERIAL_DEBUG("GUI initialization succeeded, system should now be in GUI mode.\n");
+        wm_update();  // Call wm_update() here, but note that this might not be sufficient for a fully functional GUI
         // If we reach here with successful GUI but nothing happens, we might have a loop issue
         SERIAL_DEBUG("WARNING: Control returned from GUI but GUI was successful. This indicates a potential issue.\n");
     }

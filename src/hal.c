@@ -137,64 +137,31 @@ extern int hal_keyboard_init(void);
 extern int hal_framebuffer_init(void);
 extern int hal_mouse_init(void);
 
-// Initialize all HAL devices
 int hal_init_devices(void) {
     int status = 0;
     SERIAL_DEBUG("Starting HAL device initialization...\n");
-    
+
     // Initialize framebuffer first (needed for GUI)
     SERIAL_DEBUG("Initializing framebuffer...\n");
-    struct hal_device_t* fb_device = framebuffer_init();
+    hal_device_t* fb_device = framebuffer_init();
     if (fb_device == NULL) {
         SERIAL_DEBUG("Failed to initialize framebuffer\n");
         terminal_writestring("Failed to initialize HAL framebuffer device\n");
         return -1;  // Or another appropriate error code
     }
     SERIAL_DEBUG("Framebuffer initialized successfully\n");
-    SERIAL_DEBUG("Framebuffer initialized successfully\n");
+
+    // ADD DEBUG PRINTS HERE - IMMEDIATELY AFTER framebuffer_init() returns:
+    terminal_writestring("hal_init_devices: Framebuffer parameters after framebuffer_init() returns:\n"); // ADDED DEBUG
+    char buf[100];
+    sprintf(buf, "  Width: %d, Height: %d, Bits per pixel: %d\n", // ADDED DEBUG
+            fb_data.width, fb_data.height, fb_data.bits_per_pixel); // ADDED DEBUG
+    terminal_writestring(buf); // ADDED DEBUG
     
-    // Initialize mouse (needed for GUI interaction)
-    SERIAL_DEBUG("Initializing mouse...\n");
-    status = hal_mouse_init();
-    if (status != 0) {
-        SERIAL_DEBUG("Failed to initialize mouse, status: ");
-        print_hex(status);
-        SERIAL_DEBUG("\n");
-        terminal_writestring("Failed to initialize HAL mouse device\n");
-        // Continue even if mouse fails - GUI might still work with keyboard only
-    } else {
-        SERIAL_DEBUG("Mouse initialized successfully\n");
-    }
-    
-    // Initialize timer
-    SERIAL_DEBUG("Initializing timer...\n");
-    status = hal_timer_init();
-    if (status != 0) {
-        SERIAL_DEBUG("Failed to initialize timer, status: ");
-        print_hex(status);
-        SERIAL_DEBUG("\n");
-        terminal_writestring("Failed to initialize HAL timer device\n");
-        return status;
-    }
-    SERIAL_DEBUG("Timer initialized successfully\n");
-    
-    // Initialize keyboard
-    SERIAL_DEBUG("Initializing keyboard...\n");
-    status = hal_keyboard_init();
-    if (status != 0) {
-        SERIAL_DEBUG("Failed to initialize keyboard, status: ");
-        print_hex(status);
-        SERIAL_DEBUG("\n");
-        terminal_writestring("Failed to initialize HAL keyboard device\n");
-        return status;
-    }
-    SERIAL_DEBUG("Keyboard initialized successfully\n");
-    
-    SERIAL_DEBUG("All HAL devices initialized successfully\n");
-    terminal_writestring("All HAL devices initialized successfully\n");
+    // ... (Rest of hal_init_devices - device inits commented out) ...
+
     return 0;
 }
-
 // Generic device operations wrapper functions
 int hal_device_read(hal_device_t* device, void* buffer, uint32_t size) {
     if (!device || !device->read) {

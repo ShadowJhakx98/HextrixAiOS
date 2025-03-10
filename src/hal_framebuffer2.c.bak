@@ -1,0 +1,516 @@
+#include "hal_framebuffer.h"
+#include "hal.h"  // Assumes hal_device_t and fb_ioctl are defined
+#include "terminal.h"
+#include <stdlib.h>
+#include "kmalloc.h"
+#include "string.h"
+
+// Add this at the beginning of src/hal_framebuffer.c 
+// (after the includes but before any functions)
+
+#include "terminal.h"
+#include "hal.h"
+
+// VGA memory base address
+#define VGA_MEMORY_BASE 0xA0000
+
+// VGA registers
+#define VGA_AC_INDEX      0x3C0
+#define VGA_AC_WRITE      0x3C0
+#define VGA_AC_READ       0x3C1
+#define VGA_MISC_WRITE    0x3C2
+#define VGA_SEQ_INDEX     0x3C4
+#define VGA_SEQ_DATA      0x3C5
+#define VGA_DAC_WRITE_INDEX 0x3C8
+#define VGA_DAC_DATA      0x3C9
+#define VGA_MISC_READ     0x3CC
+#define VGA_GC_INDEX      0x3CE
+#define VGA_GC_DATA       0x3CF
+#define VGA_CRTC_INDEX    0x3D4
+#define VGA_CRTC_DATA     0x3D5
+#define VGA_INSTAT_READ   0x3DA
+
+// VGA Mode 13h dimensions
+#define VGA_WIDTH  320
+#define VGA_HEIGHT 200
+
+// Function to write to VGA registers
+static void vga_write_register(uint16_t index_port, uint16_t data_port, uint8_t index, uint8_t value) {
+    outb(index_port, index);
+    outb(data_port, value);
+}
+
+// Ultra-basic direct VGA test that just writes a pattern to video memory
+static void vga_direct_test(void) {
+    terminal_writestring("*** DIRECT VGA TEST - BYPASSING NORMAL INITIALIZATION ***\n");
+    
+    // Step 1: Set VGA Mode 13h (320x200 with 256 colors)
+    // This is the simplest mode to work with - linear framebuffer at 0xA0000
+    
+    // Set miscellaneous output register
+    outb(VGA_MISC_WRITE, 0x63);
+    
+    // Sequencer registers
+    vga_write_register(VGA_SEQ_INDEX, VGA_SEQ_DATA, 0, 0x03);   // Reset sequencer
+    vga_write_register(VGA_SEQ_INDEX, VGA_SEQ_DATA, 1, 0x01);   // Clocking mode
+    vga_write_register(VGA_SEQ_INDEX, VGA_SEQ_DATA, 2, 0x0F);   // Enable all planes
+    vga_write_register(VGA_SEQ_INDEX, VGA_SEQ_DATA, 3, 0x00);   // Character map select
+    vga_write_register(VGA_SEQ_INDEX, VGA_SEQ_DATA, 4, 0x0E);   // Memory mode
+    
+    // Graphics controller registers
+    vga_write_register(VGA_GC_INDEX, VGA_GC_DATA, 0, 0x00);     // Set/reset
+    vga_write_register(VGA_GC_INDEX, VGA_GC_DATA, 1, 0x00);     // Enable set/reset
+    vga_write_register(VGA_GC_INDEX, VGA_GC_DATA, 2, 0x00);     // Color compare
+    vga_write_register(VGA_GC_INDEX, VGA_GC_DATA, 3, 0x00);     // Data rotate
+    vga_write_register(VGA_GC_INDEX, VGA_GC_DATA, 4, 0x00);     // Read plane select
+    vga_write_register(VGA_GC_INDEX, VGA_GC_DATA, 5, 0x40);     // Graphics mode
+    vga_write_register(VGA_GC_INDEX, VGA_GC_DATA, 6, 0x05);     // Miscellaneous
+    vga_write_register(VGA_GC_INDEX, VGA_GC_DATA, 7, 0x0F);     // Color don't care
+    vga_write_register(VGA_GC_INDEX, VGA_GC_DATA, 8, 0xFF);     // Bit mask
+    
+    // Step 2: Set up a very basic color palette
+    outb(VGA_DAC_WRITE_INDEX, 0);  // Start at color 0
+    
+    // Set color 0 (black)
+    outb(VGA_DAC_DATA, 0);   // Red
+    outb(VGA_DAC_DATA, 0);   // Green
+    outb(VGA_DAC_DATA, 0);   // Blue
+    
+    // Set color 1 (white)
+    outb(VGA_DAC_DATA, 63);  // Red
+    outb(VGA_DAC_DATA, 63);  // Green
+    outb(VGA_DAC_DATA, 63);  // Blue
+    
+    // Set color 2 (red)
+    outb(VGA_DAC_DATA, 63);  // Red
+    outb(VGA_DAC_DATA, 0);   // Green
+    outb(VGA_DAC_DATA, 0);   // Blue
+    
+    // Set color 3 (green)
+    outb(VGA_DAC_DATA, 0);   // Red
+    outb(VGA_DAC_DATA, 63);  // Green
+    outb(VGA_DAC_DATA, 0);   // Blue
+    
+    // Set color 4 (blue)
+    outb(VGA_DAC_DATA, 0);   // Red
+    outb(VGA_DAC_DATA, 0);   // Green
+    outb(VGA_DAC_DATA, 63);  // Blue
+    
+    terminal_writestring("VGA Mode 13h set and palette initialized\n");
+    
+    // Step 3: Draw a very simple pattern directly to video memory
+    uint8_t* vga_mem = (uint8_t*)VGA_MEMORY_BASE;
+    
+    // Clear screen to black (color 0)
+    for (int i = 0; i < VGA_WIDTH * VGA_HEIGHT; i++) {
+        vga_mem[i] = 0;
+    }
+    
+    // Draw horizontal color bands
+    for (int y = 0; y < VGA_HEIGHT; y++) {
+        uint8_t color = 0;
+        if (y > 40) color = 1;  // White
+        if (y > 80) color = 2;  // Red
+        if (y > 120) color = 3; // Green
+        if (y > 160) color = 4; // Blue
+        
+        for (int x = 0; x < VGA_WIDTH; x++) {
+            vga_mem[y * VGA_WIDTH + x] = color;
+        }
+    }
+    
+    // Draw a border around the screen
+    for (int x = 0; x < VGA_WIDTH; x++) {
+        vga_mem[x] = 1;  // Top border
+        vga_mem[(VGA_HEIGHT-1) * VGA_WIDTH + x] = 1;  // Bottom border
+    }
+    
+    for (int y = 0; y < VGA_HEIGHT; y++) {
+        vga_mem[y * VGA_WIDTH] = 1;  // Left border
+        vga_mem[y * VGA_WIDTH + (VGA_WIDTH-1)] = 1;  // Right border
+    }
+    
+    terminal_writestring("VGA test pattern drawn - check screen for output\n");
+    terminal_writestring("*** DIRECT VGA TEST COMPLETE ***\n");
+}
+
+// Call this function at the beginning of framebuffer_init
+// (add to the top of framebuffer_init function, before any other code)
+// vga_direct_test();
+
+
+// Global framebuffer data
+fb_data_t fb_data = {0};
+static hal_device_t fb_device = {0};
+
+// Simple font data (8x8 bitmap font placeholder)
+static const uint8_t font_8x8[128][8] = {
+    // Minimal ASCII characters (expand as needed)
+    [32] = {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // Space
+    [65] = {0x7C, 0x82, 0x82, 0x82, 0xFE, 0x82, 0x82, 0x00}, // 'A'
+    // Add more characters as required
+};
+
+// Replace the fb_init_direct_vga function in hal_framebuffer.c with this version
+
+static int fb_init_direct_vga(void) {
+    terminal_writestring("Using direct VGA mode 13h (320x200x8)\n");
+    
+    // Set up a basic mode 13h (320x200x8) VGA framebuffer
+    fb_data.width = 320;
+    fb_data.height = 200;
+    fb_data.bits_per_pixel = 8; // 8-bit color
+    fb_data.bytes_per_pixel = 1;
+    fb_data.pitch = fb_data.width;
+    fb_data.framebuffer_size = fb_data.width * fb_data.height;
+    
+    // Point directly to VGA memory-mapped I/O
+    fb_data.framebuffer = (uint8_t*)0xA0000;
+    
+    // Set VGA mode 13h (320x200 with 256 colors)
+    // Write to port 0x3C8 (palette index) and 0x3C9 (palette data)
+    outb(0x3C8, 0);  // Select palette index 0
+    
+    // Set up a simple color palette - 16 basic colors
+    // Each color needs 3 bytes (R, G, B)
+    for (int i = 0; i < 16; i++) {
+        outb(0x3C9, (i & 4) ? 63 : 0);  // Red: colors 4-7, 12-15
+        outb(0x3C9, (i & 2) ? 63 : 0);  // Green: colors 2-3, 6-7, 10-11, 14-15
+        outb(0x3C9, (i & 1) ? 63 : 0);  // Blue: odd-numbered colors
+    }
+    
+    terminal_writestring("VGA palette initialized\n");
+    
+    // Clear screen to black (color 0)
+    for (int i = 0; i < fb_data.width * fb_data.height; i++) {
+        fb_data.framebuffer[i] = 0;
+    }
+    
+    // Draw a very simple pattern - horizontal bands of different colors
+    for (int y = 0; y < fb_data.height; y++) {
+        uint8_t color = (y / 20) % 16;  // Change color every 20 lines
+        for (int x = 0; x < fb_data.width; x++) {
+            fb_data.framebuffer[y * fb_data.width + x] = color;
+        }
+    }
+    
+    // Draw a color gradient in the middle
+    for (int y = 80; y < 120; y++) {
+        for (int x = 80; x < 240; x++) {
+            uint8_t color = ((x - 80) / 10) % 16;
+            fb_data.framebuffer[y * fb_data.width + x] = color;
+        }
+    }
+    
+    // Disable double buffering since we're writing directly to hardware
+    fb_data.double_buffering = 0;
+    fb_data.back_buffer = NULL;
+    
+    terminal_writestring("VGA test pattern drawn\n");
+    return 0;
+}
+
+// In src/hal_framebuffer.c, update the fb_init function
+// Replace the fb_init function in src/hal_framebuffer.c:
+
+static int fb_init(void* device) {
+    terminal_writestring("fb_init: Starting framebuffer initialization\n");
+    
+    // In QEMU, we need to set up a more realistic framebuffer
+    // For now, we'll use a simple memory buffer, but we should connect to video hardware
+    
+    // Realistic resolution for testing
+    fb_data.width = 640;
+    fb_data.height = 480;
+    fb_data.bits_per_pixel = 32;
+    fb_data.bytes_per_pixel = 4;
+    fb_data.pitch = fb_data.width * fb_data.bytes_per_pixel;
+    fb_data.framebuffer_size = fb_data.pitch * fb_data.height;
+
+    terminal_writestring("fb_init: Allocating framebuffer memory\n");
+    
+    // Allocate framebuffer memory
+    fb_data.framebuffer = kmalloc(fb_data.framebuffer_size);
+    if (!fb_data.framebuffer) {
+        terminal_writestring("fb_init: Failed to allocate framebuffer memory\n");
+        return -1;
+    }
+    
+    // Clear the framebuffer
+    memset(fb_data.framebuffer, 0, fb_data.framebuffer_size);
+    
+    // Initialize without double buffering initially
+    fb_data.double_buffering = 0;
+    fb_data.back_buffer = NULL;
+    fb_data.current_color = FB_COLOR_WHITE;
+    
+    terminal_writestring("fb_init: Framebuffer initialized successfully\n");
+    return 0;
+}
+
+// IOCTL implementation
+static int fb_ioctl(void* device, uint32_t request, void* arg) {
+    switch (request) {
+        case FB_IOCTL_CLEAR: {
+            uint32_t color = arg ? *(uint32_t*)arg : 0;
+            uint8_t* buffer = fb_data.double_buffering ? fb_data.back_buffer : fb_data.framebuffer;
+            uint32_t* pixel = (uint32_t*)buffer;
+            for (uint32_t i = 0; i < fb_data.framebuffer_size / 4; i++) {
+                pixel[i] = color;
+            }
+            return 0;
+        }
+        case FB_IOCTL_ENABLE_DOUBLE_BUFFERING: {
+            if (!fb_data.double_buffering) {
+                fb_data.back_buffer = kmalloc(fb_data.framebuffer_size);
+                if (!fb_data.back_buffer) return -1;
+                memcpy(fb_data.back_buffer, fb_data.framebuffer, fb_data.framebuffer_size);
+                fb_data.double_buffering = 1;
+            }
+            return 0;
+        }
+        case FB_IOCTL_DISABLE_DOUBLE_BUFFERING: {
+            if (fb_data.double_buffering) {
+                kfree(fb_data.back_buffer);
+                fb_data.back_buffer = NULL;
+                fb_data.double_buffering = 0;
+            }
+            return 0;
+        }
+        case FB_IOCTL_SWAP_BUFFERS: {
+            if (fb_data.double_buffering && fb_data.back_buffer) {
+                memcpy(fb_data.framebuffer, fb_data.back_buffer, fb_data.framebuffer_size);
+            }
+            return 0;
+        }
+        default:
+            return -1;
+    }
+}
+
+// Pixel plotting function
+static void fb_plot_pixel(uint32_t x, uint32_t y, uint32_t color) {
+    if (x >= fb_data.width || y >= fb_data.height) return;
+    uint32_t offset = y * fb_data.pitch + x * fb_data.bytes_per_pixel;
+    uint8_t* buffer = fb_data.double_buffering ? fb_data.back_buffer : fb_data.framebuffer;
+    uint32_t* pixel = (uint32_t*)(buffer + offset);
+    *pixel = color;
+}
+
+// Public API functions
+// In src/hal_framebuffer.c, update the fb_clear_screen function
+
+// Replace the fb_clear_screen function in src/hal_framebuffer.c:
+
+void fb_clear_screen(uint32_t color) {
+    terminal_writestring("fb_clear_screen: Clearing screen\n");
+    
+    // Get the appropriate buffer
+    uint8_t* buffer = fb_data.double_buffering ? fb_data.back_buffer : fb_data.framebuffer;
+    
+    // Safety check
+    if (!buffer) {
+        terminal_writestring("fb_clear_screen: Buffer is NULL!\n");
+        return;
+    }
+    
+    // Fill the buffer directly
+    uint32_t* pixel = (uint32_t*)buffer;
+    for (uint32_t i = 0; i < (fb_data.width * fb_data.height); i++) {
+        pixel[i] = color;
+    }
+    
+    // For testing, force some visible content on screen
+    // Draw a test pattern - this should be visible if framebuffer works
+    if (color == 0xFF006060) { // Only draw pattern on desktop background
+        for (uint32_t y = 0; y < fb_data.height; y += 40) {
+            for (uint32_t x = 0; x < fb_data.width; x += 40) {
+                uint32_t block_color = ((x + y) % 80 == 0) ? 0xFFFF0000 : 0xFF0000FF; // Red and blue checkerboard
+                for (uint32_t py = y; py < y + 40 && py < fb_data.height; py++) {
+                    for (uint32_t px = x; px < x + 40 && px < fb_data.width; px++) {
+                        uint32_t offset = py * fb_data.width + px;
+                        pixel[offset] = block_color;
+                    }
+                }
+            }
+        }
+    }
+    
+    // If using double buffering, copy to the front buffer
+    if (fb_data.double_buffering) {
+        fb_swap_buffers();
+    }
+    
+    terminal_writestring("fb_clear_screen: Screen cleared\n");
+}
+
+void fb_draw_pixel(uint32_t x, uint32_t y, uint32_t color) {
+    fb_plot_pixel(x, y, color);
+}
+
+void fb_swap_buffers(void) {
+    fb_ioctl(&fb_device, FB_IOCTL_SWAP_BUFFERS, NULL);
+}
+
+// Replace the framebuffer_init function in hal_framebuffer.c
+
+hal_device_t* framebuffer_init(void) {
+    terminal_writestring("\n==== FRAMEBUFFER INITIALIZATION ====\n");
+    terminal_writestring("Attempting to initialize video output...\n");
+    vga_direct_test();
+    
+    // Set the device type and operations
+    fb_device.type = HAL_DEVICE_FRAMEBUFFER;
+    fb_device.mode = HAL_MODE_POLLING;
+    fb_device.init = fb_init;
+    fb_device.ioctl = fb_ioctl;
+    fb_device.private_data = &fb_data;
+    
+    // Initialize success flag
+    int init_success = 0;
+    
+    // Try direct VGA mode first - more likely to work with QEMU
+    terminal_writestring("\nTrying direct VGA mode (Mode 13h)...\n");
+    if (fb_init_direct_vga() == 0) {
+        terminal_writestring("Direct VGA Mode 13h initialized successfully!\n");
+        init_success = 1;
+    } else {
+        terminal_writestring("Direct VGA mode failed.\n");
+        
+        // Try standard framebuffer init as fallback
+        terminal_writestring("\nFalling back to standard framebuffer...\n");
+        if (fb_init(&fb_device) == 0) {
+            terminal_writestring("Standard framebuffer initialized.\n");
+            init_success = 1;
+        } else {
+            terminal_writestring("Standard framebuffer initialization failed.\n");
+        }
+    }
+    
+    if (!init_success) {
+        terminal_writestring("All framebuffer initialization methods failed!\n");
+        return NULL;
+    }
+    
+    // Display framebuffer info
+    char buf[100];
+    sprintf(buf, "Framebuffer: %dx%d with %d bits per pixel\n", 
+            fb_data.width, fb_data.height, fb_data.bits_per_pixel);
+    terminal_writestring(buf);
+    
+    sprintf(buf, "Framebuffer address: 0x%08x, Size: %d bytes\n", 
+            (unsigned int)fb_data.framebuffer, fb_data.framebuffer_size);
+    terminal_writestring(buf);
+    
+    // Register the device with HAL
+    terminal_writestring("Registering framebuffer device with HAL...\n");
+    if (hal_register_device(&fb_device) != 0) {
+        terminal_writestring("Failed to register framebuffer device with HAL!\n");
+        return NULL;
+    }
+    
+    terminal_writestring("Framebuffer device registered successfully.\n");
+    terminal_writestring("==== FRAMEBUFFER INITIALIZATION COMPLETE ====\n\n");
+    return &fb_device;
+}
+
+int fb_get_info(fb_info_t* info) {
+    if (!info) return -1;
+    info->width = fb_data.width;
+    info->height = fb_data.height;
+    info->bits_per_pixel = fb_data.bits_per_pixel;
+    info->pitch = fb_data.pitch;
+    info->buffer = fb_data.framebuffer;
+    info->double_buffered = fb_data.double_buffering;
+    return 0;
+}
+
+void fb_set_double_buffering(uint8_t enabled) {
+    if (enabled) {
+        fb_ioctl(&fb_device, FB_IOCTL_ENABLE_DOUBLE_BUFFERING, NULL);
+    } else {
+        fb_ioctl(&fb_device, FB_IOCTL_DISABLE_DOUBLE_BUFFERING, NULL);
+    }
+}
+
+void fb_draw_rectangle(uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint32_t color, int filled) {
+    if (filled) {
+        for (uint32_t i = y; i < y + height && i < fb_data.height; i++) {
+            for (uint32_t j = x; j < x + width && j < fb_data.width; j++) {
+                fb_plot_pixel(j, i, color);
+            }
+        }
+    } else {
+        for (uint32_t i = x; i < x + width && i < fb_data.width; i++) {
+            fb_plot_pixel(i, y, color);
+            fb_plot_pixel(i, y + height - 1, color);
+        }
+        for (uint32_t i = y; i < y + height && i < fb_data.height; i++) {
+            fb_plot_pixel(x, i, color);
+            fb_plot_pixel(x + width - 1, i, color);
+        }
+    }
+}
+
+void fb_draw_text(uint32_t x, uint32_t y, const char* text, uint32_t color) {
+    if (!text) return;
+    uint32_t pos_x = x;
+    for (int i = 0; text[i]; i++) {
+        uint8_t c = text[i];
+        if (c < 32 || c > 127) continue; // Basic ASCII only
+        const uint8_t* glyph = font_8x8[c];
+        for (int gy = 0; gy < 8; gy++) {
+            for (int gx = 0; gx < 8; gx++) {
+                if (glyph[gy] & (1 << (7 - gx))) {
+                    fb_plot_pixel(pos_x + gx, y + gy, color);
+                }
+            }
+        }
+        pos_x += 8;
+    }
+}
+
+void fb_draw_line(uint32_t x0, uint32_t y0, uint32_t x1, uint32_t y1, uint32_t color) {
+    int dx = abs((int)x1 - (int)x0), sx = x0 < x1 ? 1 : -1;
+    int dy = -abs((int)y1 - (int)y0), sy = y0 < y1 ? 1 : -1;
+    int err = dx + dy, e2;
+
+    while (1) {
+        fb_plot_pixel(x0, y0, color);
+        if (x0 == x1 && y0 == y1) break;
+        e2 = 2 * err;
+        if (e2 >= dy) { err += dy; x0 += sx; }
+        if (e2 <= dx) { err += dx; y0 += sy; }
+    }
+}
+
+void fb_draw_circle(uint32_t center_x, uint32_t center_y, uint32_t radius, uint32_t color, int filled) {
+    int x = radius;
+    int y = 0;
+    int err = 0;
+
+    while (x >= y) {
+        if (filled) {
+            fb_draw_line(center_x - x, center_y + y, center_x + x, center_y + y, color);
+            fb_draw_line(center_x - y, center_y + x, center_x + y, center_y + x, color);
+            fb_draw_line(center_x - x, center_y - y, center_x + x, center_y - y, color);
+            fb_draw_line(center_x - y, center_y - x, center_x + y, center_y - x, color);
+        } else {
+            fb_plot_pixel(center_x + x, center_y + y, color);
+            fb_plot_pixel(center_x - x, center_y + y, color);
+            fb_plot_pixel(center_x + x, center_y - y, color);
+            fb_plot_pixel(center_x - x, center_y - y, color);
+            fb_plot_pixel(center_x + y, center_y + x, color);
+            fb_plot_pixel(center_x - y, center_y + x, color);
+            fb_plot_pixel(center_x + y, center_y - x, color);
+            fb_plot_pixel(center_x - y, center_y - x, color);
+        }
+
+        y += 1;
+        err += 1 + 2 * y;
+        if (2 * (err - x) + 1 > 0) {
+            x -= 1;
+            err += 1 - 2 * x;
+        }
+    }
+}

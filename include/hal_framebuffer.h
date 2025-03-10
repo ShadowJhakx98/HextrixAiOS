@@ -44,7 +44,7 @@ typedef struct {
     uint8_t bits_per_pixel;
     uint8_t bytes_per_pixel;
     uint32_t framebuffer_addr;
-    uint8_t* framebuffer;
+    uint8_t* framebuffer;  // <-- IMPORTANT: Make sure it's named 'framebuffer' and is a pointer
     uint32_t framebuffer_size;
     uint32_t current_color;
     uint8_t double_buffering;

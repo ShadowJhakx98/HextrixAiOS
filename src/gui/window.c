@@ -64,75 +64,147 @@ static void draw_controls(window_t* window);
 static window_control_t* find_control_at(window_t* window, uint32_t x, uint32_t y);
 static void control_draw(window_control_t* control);
 
-// Initialize the window manager
-int wm_init(void) {
-    fb_info_t info;
+// Add this to window.c, near the beginning of the file
+
+// VGA color palette approximation for 32-bit ARGB colors
+// This maps common 32-bit colors to their closest VGA palette equivalents
+// VGA color palette approximation for 32-bit ARGB colors
+// This maps common 32-bit colors to their closest VGA palette equivalents
+static uint8_t vga_color_map(uint32_t rgb_color) {
+    // Handle common predefined colors that we know exist
+    if (rgb_color == FB_COLOR_BLACK) return 0;        // Black
+    if (rgb_color == FB_COLOR_BLUE) return 1;         // Blue
+    if (rgb_color == FB_COLOR_GREEN) return 2;        // Green
+    if (rgb_color == FB_COLOR_CYAN) return 3;         // Cyan
+    if (rgb_color == FB_COLOR_RED) return 4;          // Red
+    if (rgb_color == FB_COLOR_MAGENTA) return 5;      // Magenta
+    if (rgb_color == FB_COLOR_BROWN) return 6;        // Brown
+    if (rgb_color == FB_COLOR_LIGHT_GRAY) return 7;   // Light Gray
+    if (rgb_color == FB_COLOR_DARK_GRAY) return 8;    // Dark Gray
+    if (rgb_color == FB_COLOR_YELLOW) return 14;      // Yellow
+    if (rgb_color == FB_COLOR_WHITE) return 15;       // White
+    if (rgb_color == FB_COLOR_PURPLE) return 5;       // Map purple to magenta
     
-    // Check if framebuffer is initialized
-    fb_get_info(&info);
-    if (info.width == 0 || info.height == 0) {
-        terminal_writestring("Window Manager Error: Framebuffer not initialized\n");
-        return -1;
+    // Desktop background color (teal)
+    if (rgb_color == 0xFF006060) return 3;           // Map teal to Cyan
+    
+    // Extract RGB components for colors not in the predefined list
+    uint8_t r = (rgb_color >> 16) & 0xFF;
+    uint8_t g = (rgb_color >> 8) & 0xFF;
+    uint8_t b = rgb_color & 0xFF;
+    
+    // Basic VGA palette mapping based on color intensity
+    if (r < 64 && g < 64 && b < 64) return 0;         // Black
+    if (r > 192 && g > 192 && b > 192) return 15;     // White
+    if (r > 192 && g < 64 && b < 64) return 4;        // Red
+    if (r < 64 && g > 192 && b < 64) return 2;        // Green
+    if (r < 64 && g < 64 && b > 192) return 1;        // Blue
+    if (r > 192 && g > 192 && b < 64) return 14;      // Yellow
+    if (r < 64 && g > 192 && b > 192) return 3;       // Cyan
+    if (r > 192 && g < 64 && b > 192) return 5;       // Magenta
+    
+    // Grays
+    if (r > 64 && r < 192 && g > 64 && g < 192 && b > 64 && b < 192) {
+        if (r < 128 && g < 128 && b < 128) return 8;  // Dark gray
+        return 7;                                     // Light gray
     }
     
+    // Other colors - pick closest based on highest component
+    if (r > g && r > b) return 4;                     // Red
+    if (g > r && g > b) return 2;                     // Green
+    if (b > r && b > g) return 1;                     // Blue
+    
+    return 7;  // Default to light gray if no match
+}
+
+// Modify the fb_plot_pixel function in window.c to use this adapter
+// This function should be updated to use the vga_color_map function when in 8-bit mode
+static void fb_window_plot_pixel(uint32_t x, uint32_t y, uint32_t color) {
+    fb_info_t info;
+    fb_get_info(&info);
+    
+    if (info.bits_per_pixel == 8) {
+        // Convert 32-bit color to VGA palette index
+        uint8_t vga_color = vga_color_map(color);
+        fb_draw_pixel(x, y, vga_color);
+    } else {
+        // Use original color for higher bit depths
+        fb_draw_pixel(x, y, color);
+    }
+}
+
+// Replace the wm_init function in window.c with this version
+int wm_init(void) {
+    // Minimize debug output
+    static int init_attempted = 0;
+    if (!init_attempted) {
+        terminal_writestring("wm_init: Initializing window manager\n");
+        init_attempted = 1;
+    }
+
+    fb_info_t info;
+    fb_get_info(&info);
+
+    if (info.width == 0 || info.height == 0) {
+        return -1;
+    }
+
     // Initialize window array
     for (int i = 0; i < MAX_WINDOWS; i++) {
         windows[i] = NULL;
     }
-    
+
     // Initialize message queue
     message_head = 0;
     message_tail = 0;
     message_count = 0;
-    
+
     // Register mouse handler
     mouse_register_handler(handle_mouse_event);
-    
-    // Enable double buffering
-    fb_set_double_buffering(1);
-    
-    // Clear the screen with desktop background color
-    fb_clear_screen(COLOR_DESKTOP_BG);
-    fb_swap_buffers();
-    
+
+    // For direct VGA mode, we don't want double buffering
+    if (info.bits_per_pixel == 8) {
+        fb_set_double_buffering(0);
+    } else {
+        fb_set_double_buffering(1);
+    }
+
+    // Clear screen with desktop background color
+    uint32_t bg_color = (info.bits_per_pixel == 8) ? 1 : COLOR_DESKTOP_BG; // Blue for VGA
+    fb_clear_screen(bg_color);
+
     // Initialize dirty region tracking
     full_redraw_needed = 1;
     
+    // Set initialization flag
     wm_initialized = 1;
     
-    terminal_writestring("Window Manager initialized\n");
-    return 0;
+    return 0; // Success
 }
 
-// Process window manager events (mouse, keyboard, etc.)
-void wm_process_events(void) {
-    // Poll for mouse updates
-    mouse_update();
-    
-    // Process messages in the queue
-    while (process_next_message());
-}
-
-// Update the window manager using dirty regions
+// Updated wm_update function to handle VGA mode
 void wm_update(void) {
     if (!wm_initialized) return;
 
+    fb_info_t info;
+    fb_get_info(&info);
+    
     // Use dirty regions for efficient rendering
     if (full_redraw_needed) {
         // Clear the entire framebuffer with desktop background color
-        fb_clear_screen(COLOR_DESKTOP_BG);
+        uint32_t bg_color = (info.bits_per_pixel == 8) ? 1 : COLOR_DESKTOP_BG; // Blue for VGA
+        fb_clear_screen(bg_color);
         full_redraw_needed = 0;
         
         // Reset dirty region to full screen
-        fb_info_t info;
-        fb_get_info(&info);
         dirty_x = 0;
         dirty_y = 0;
         dirty_width = info.width;
         dirty_height = info.height;
     } else if (dirty_width > 0 && dirty_height > 0) {
         // Clear only the dirty region with desktop background color
-        fb_draw_rectangle(dirty_x, dirty_y, dirty_width, dirty_height, COLOR_DESKTOP_BG, 1);
+        uint32_t bg_color = (info.bits_per_pixel == 8) ? 1 : COLOR_DESKTOP_BG; // Blue for VGA
+        fb_draw_rectangle(dirty_x, dirty_y, dirty_width, dirty_height, bg_color, 1);
     } else {
         // No redraw needed
         return;
@@ -157,8 +229,19 @@ void wm_update(void) {
     // Reset dirty region
     dirty_x = dirty_y = dirty_width = dirty_height = 0;
     
-    // Swap buffers to display the updated screen
-    fb_swap_buffers();
+    // Swap buffers to display the updated screen (no-op in 8-bit mode)
+    if (info.bits_per_pixel > 8) {
+        fb_swap_buffers();
+    }
+}
+
+// Process window manager events (mouse, keyboard, etc.)
+void wm_process_events(void) {
+    // Poll for mouse updates
+    mouse_update();
+    
+    // Process messages in the queue
+    while (process_next_message());
 }
 
 // Mark a region as dirty, to be redrawn in the next update
@@ -670,6 +753,7 @@ void window_draw_pixel(window_t* window, uint32_t x, uint32_t y, uint32_t color)
     fb_draw_pixel(screen_x, screen_y, color);
 }
 
+// Update the window_draw_line function
 void window_draw_line(window_t* window, uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color) {
     if (!window) return;
     
@@ -679,10 +763,30 @@ void window_draw_line(window_t* window, uint32_t x1, uint32_t y1, uint32_t x2, u
     uint32_t screen_x2 = window->x + window->client_x + x2;
     uint32_t screen_y2 = window->y + window->client_y + y2;
     
+    // Convert color if in 8-bit mode
+    fb_info_t info;
+    fb_get_info(&info);
+    if (info.bits_per_pixel == 8) {
+        color = vga_color_map(color);
+    }
+    
     // Draw line to framebuffer
     fb_draw_line(screen_x1, screen_y1, screen_x2, screen_y2, color);
 }
+// Draw a rectangle
+void fb_window_draw_rectangle(uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint32_t color, int filled) {
+    fb_info_t info;
+    fb_get_info(&info);
+    
+    // Convert color if in 8-bit mode
+    if (info.bits_per_pixel == 8) {
+        color = vga_color_map(color);
+    }
+    
+    fb_draw_rectangle(x, y, width, height, color, filled);
+}
 
+// Update the window_draw_rect function
 void window_draw_rect(window_t* window, uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint32_t color) {
     if (!window) return;
     
@@ -690,10 +794,11 @@ void window_draw_rect(window_t* window, uint32_t x, uint32_t y, uint32_t width, 
     uint32_t screen_x = window->x + window->client_x + x;
     uint32_t screen_y = window->y + window->client_y + y;
     
-    // Draw rectangle outline to framebuffer
-    fb_draw_rectangle(screen_x, screen_y, width, height, color, 0);
+    // Draw rectangle outline to framebuffer using adapter function
+    fb_window_draw_rectangle(screen_x, screen_y, width, height, color, 0);
 }
 
+// Update the window_fill_rect function
 void window_fill_rect(window_t* window, uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint32_t color) {
     if (!window) return;
     
@@ -701,19 +806,8 @@ void window_fill_rect(window_t* window, uint32_t x, uint32_t y, uint32_t width, 
     uint32_t screen_x = window->x + window->client_x + x;
     uint32_t screen_y = window->y + window->client_y + y;
     
-    // Draw filled rectangle to framebuffer
-    fb_draw_rectangle(screen_x, screen_y, width, height, color, 1);
-}
-
-void window_draw_circle(window_t* window, uint32_t x0, uint32_t y0, uint32_t radius, uint32_t color) {
-    if (!window) return;
-    
-    // Convert to screen coordinates
-    uint32_t screen_x = window->x + window->client_x + x0;
-    uint32_t screen_y = window->y + window->client_y + y0;
-    
-    // Draw circle to framebuffer
-    fb_draw_circle(screen_x, screen_y, radius, color, 0);  // Unfilled
+    // Draw filled rectangle to framebuffer using adapter function
+    fb_window_draw_rectangle(screen_x, screen_y, width, height, color, 1);
 }
 
 void window_fill_circle(window_t* window, uint32_t x0, uint32_t y0, uint32_t radius, uint32_t color) {
@@ -727,6 +821,7 @@ void window_fill_circle(window_t* window, uint32_t x0, uint32_t y0, uint32_t rad
     fb_draw_circle(screen_x, screen_y, radius, color, 1);  // Filled
 }
 
+// Update the window_draw_text function
 void window_draw_text(window_t* window, uint32_t x, uint32_t y, const char* text, uint32_t color) {
     if (!window || !text) return;
     
@@ -734,10 +829,35 @@ void window_draw_text(window_t* window, uint32_t x, uint32_t y, const char* text
     uint32_t screen_x = window->x + window->client_x + x;
     uint32_t screen_y = window->y + window->client_y + y;
     
+    // Convert color if in 8-bit mode
+    fb_info_t info;
+    fb_get_info(&info);
+    if (info.bits_per_pixel == 8) {
+        color = vga_color_map(color);
+    }
+    
     // Draw text to framebuffer
     fb_draw_text(screen_x, screen_y, text, color);
 }
+// Add this function to window.c below the window_fill_circle function
 
+void window_draw_circle(window_t* window, uint32_t x0, uint32_t y0, uint32_t radius, uint32_t color) {
+    if (!window) return;
+    
+    // Convert to screen coordinates
+    uint32_t screen_x = window->x + window->client_x + x0;
+    uint32_t screen_y = window->y + window->client_y + y0;
+    
+    // Convert color if in 8-bit mode
+    fb_info_t info;
+    fb_get_info(&info);
+    if (info.bits_per_pixel == 8) {
+        color = vga_color_map(color);
+    }
+    
+    // Draw circle outline to framebuffer
+    fb_draw_circle(screen_x, screen_y, radius, color, 0);  // Unfilled
+}
 void window_clear(window_t* window, uint32_t color) {
     if (!window) return;
     
