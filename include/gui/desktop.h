@@ -67,6 +67,6 @@ void desktop_open_settings(void);
 void desktop_show_system_info(void);
 
 // Launch the desktop environment
-void desktop_run(void);
+int desktop_run(void);
 
 #endif // GUI_DESKTOP_H

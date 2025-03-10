@@ -5,7 +5,7 @@
 #include <stddef.h>
 
 // Initialize memory allocator
-void kmalloc_init(void);
+int kmalloc_init(void);
 
 // Allocate memory
 void* kmalloc(size_t size);

@@ -1,4 +1,4 @@
-// src/memory_enhanced.c - Enhanced memory management implementation
+// src/memory.c - Memory management implementation
 
 #include "memory.h"
 #include "stdio.h"
@@ -6,6 +6,8 @@
 #include "kmalloc.h"
 #include "string.h"
 #include <stdint.h>
+
+#define PAGE_SIZE 4096 // 4KB pages
 
 // Memory block descriptor for memory tracking
 typedef struct memory_block {
@@ -70,6 +72,7 @@ int unmap_page(uint32_t virtual_addr) {
     // Simple stub - in a real OS, this would update page tables
     return 0;  // Success
 }
+
 // Memory mapping list
 static memory_mapping_t* mapping_list = NULL;
 
@@ -206,10 +209,11 @@ static void free_physical_page(uint32_t physical_addr) {
     memory_stats.used_memory -= PAGE_SIZE;
     memory_stats.free_memory += PAGE_SIZE;
 }
+
 // Initialize paging system
-void init_paging(void) {
-    // Simple stub - in a real OS, this would set up page tables
+int init_paging(void) {
     terminal_writestring("Paging initialized\n");
+    return 0; // Success
 }
 
 // Track memory allocation
@@ -486,6 +490,7 @@ int enhanced_memory_check(uint32_t address, uint32_t size, uint32_t access_flags
     // For now, we'll allow it if the basic memory check passed
     return 1;
 }
+
 // Add near other memory protection functions
 void enable_memory_protection(void) {
     terminal_writestring("Memory protection enabled\n");
@@ -494,12 +499,14 @@ void enable_memory_protection(void) {
 void disable_memory_protection(void) {
     terminal_writestring("Memory protection disabled\n");
 }
+
 // Check if a memory access is valid
 int is_valid_access(uint32_t virtual_addr, uint32_t access_flags) {
     // Simple implementation - consider all accesses to usable memory valid
     // In a real OS, this would check page permissions
     return (virtual_addr < 0x800000);  // Allow access to first 8MB
 }
+
 // Add with other diagnostic functions, or at the end of the file
 void display_memory_regions(void) {
     terminal_writestring("Memory regions:\n");
@@ -507,6 +514,7 @@ void display_memory_regions(void) {
     terminal_writestring("  Heap: 1MB - 5MB\n");
     terminal_writestring("  User: 5MB - 8MB\n");
 }
+
 // Display memory map visualization
 void display_memory_map(void) {
     terminal_writestring("Memory Map Visualization:\n");

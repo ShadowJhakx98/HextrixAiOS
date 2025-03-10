@@ -1,6 +1,5 @@
 // src/hal_timer.c
 #include "hal.h"
-#include "io.h"
 #include "terminal.h"
 #include "scheduler.h"
 

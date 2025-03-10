@@ -63,6 +63,7 @@ static int process_next_message(void);
 static void draw_controls(window_t* window);
 static window_control_t* find_control_at(window_t* window, uint32_t x, uint32_t y);
 static void control_draw(window_control_t* control);
+
 // Initialize the window manager
 int wm_init(void) {
     fb_info_t info;
@@ -91,7 +92,7 @@ int wm_init(void) {
     fb_set_double_buffering(1);
     
     // Clear the screen with desktop background color
-    fb_clear(COLOR_DESKTOP_BG);
+    fb_clear_screen(COLOR_DESKTOP_BG);
     fb_swap_buffers();
     
     // Initialize dirty region tracking
@@ -118,8 +119,8 @@ void wm_update(void) {
 
     // Use dirty regions for efficient rendering
     if (full_redraw_needed) {
-        // Clear the entire framebuffer 
-        fb_clear(COLOR_DESKTOP_BG);
+        // Clear the entire framebuffer with desktop background color
+        fb_clear_screen(COLOR_DESKTOP_BG);
         full_redraw_needed = 0;
         
         // Reset dirty region to full screen
@@ -130,8 +131,8 @@ void wm_update(void) {
         dirty_width = info.width;
         dirty_height = info.height;
     } else if (dirty_width > 0 && dirty_height > 0) {
-        // Clear only the dirty region
-        fb_fill_rect(dirty_x, dirty_y, dirty_width, dirty_height, COLOR_DESKTOP_BG);
+        // Clear only the dirty region with desktop background color
+        fb_draw_rectangle(dirty_x, dirty_y, dirty_width, dirty_height, COLOR_DESKTOP_BG, 1);
     } else {
         // No redraw needed
         return;
@@ -147,7 +148,6 @@ void wm_update(void) {
                     win->x < dirty_x + dirty_width &&
                     win->y + win->height > dirty_y && 
                     win->y < dirty_y + dirty_height) {
-                    
                     draw_window(win);
                 }
             }
@@ -196,6 +196,7 @@ void wm_redraw_all(void) {
     full_redraw_needed = 1;
     wm_update();
 }
+
 // Create a new window
 window_t* window_create(const char* title, uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint32_t style) {
     if (window_count >= MAX_WINDOWS) {
@@ -339,6 +340,7 @@ void window_destroy(window_t* window) {
     // Update display
     wm_update();
 }
+
 // Show a window
 void window_show(window_t* window) {
     if (!window) return;
@@ -587,6 +589,7 @@ void window_activate(window_t* window) {
     // Update display
     wm_update();
 }
+
 // Set window event handler
 void window_set_event_handler(window_t* window, window_event_handler_t handler) {
     if (!window) return;
@@ -655,6 +658,7 @@ int window_post_message(window_t* window, uint32_t msg_type, uint32_t param1, ui
     
     return 1;
 }
+
 void window_draw_pixel(window_t* window, uint32_t x, uint32_t y, uint32_t color) {
     if (!window) return;
     
@@ -686,8 +690,8 @@ void window_draw_rect(window_t* window, uint32_t x, uint32_t y, uint32_t width, 
     uint32_t screen_x = window->x + window->client_x + x;
     uint32_t screen_y = window->y + window->client_y + y;
     
-    // Draw rectangle to framebuffer
-    fb_draw_rect(screen_x, screen_y, width, height, color);
+    // Draw rectangle outline to framebuffer
+    fb_draw_rectangle(screen_x, screen_y, width, height, color, 0);
 }
 
 void window_fill_rect(window_t* window, uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint32_t color) {
@@ -698,7 +702,7 @@ void window_fill_rect(window_t* window, uint32_t x, uint32_t y, uint32_t width, 
     uint32_t screen_y = window->y + window->client_y + y;
     
     // Draw filled rectangle to framebuffer
-    fb_fill_rect(screen_x, screen_y, width, height, color);
+    fb_draw_rectangle(screen_x, screen_y, width, height, color, 1);
 }
 
 void window_draw_circle(window_t* window, uint32_t x0, uint32_t y0, uint32_t radius, uint32_t color) {
@@ -709,7 +713,7 @@ void window_draw_circle(window_t* window, uint32_t x0, uint32_t y0, uint32_t rad
     uint32_t screen_y = window->y + window->client_y + y0;
     
     // Draw circle to framebuffer
-    fb_draw_circle(screen_x, screen_y, radius, color);
+    fb_draw_circle(screen_x, screen_y, radius, color, 0);  // Unfilled
 }
 
 void window_fill_circle(window_t* window, uint32_t x0, uint32_t y0, uint32_t radius, uint32_t color) {
@@ -720,7 +724,7 @@ void window_fill_circle(window_t* window, uint32_t x0, uint32_t y0, uint32_t rad
     uint32_t screen_y = window->y + window->client_y + y0;
     
     // Draw filled circle to framebuffer
-    fb_fill_circle(screen_x, screen_y, radius, color);
+    fb_draw_circle(screen_x, screen_y, radius, color, 1);  // Filled
 }
 
 void window_draw_text(window_t* window, uint32_t x, uint32_t y, const char* text, uint32_t color) {
@@ -739,6 +743,7 @@ void window_clear(window_t* window, uint32_t color) {
     
     window_fill_rect(window, 0, 0, window->client_width, window->client_height, color);
 }
+
 void window_screen_to_client(window_t* window, uint32_t screen_x, uint32_t screen_y, uint32_t* client_x, uint32_t* client_y) {
     if (!window || !client_x || !client_y) return;
     
@@ -754,6 +759,7 @@ void window_screen_to_client(window_t* window, uint32_t screen_x, uint32_t scree
         *client_y = 0;
     }
 }
+
 // Draw a window
 static void draw_window(window_t* window) {
     if (!window || !window->visible) return;
@@ -788,7 +794,7 @@ static void draw_title_bar(window_t* window) {
     uint32_t title_height = TITLE_BAR_HEIGHT;
     
     // Draw title bar background
-    fb_fill_rect(title_x, title_y, title_width, title_height, window->title_bg_color);
+    fb_draw_rectangle(title_x, title_y, title_width, title_height, window->title_bg_color, 1);
     
     // Draw title text
     if (window->title[0] != '\0') {
@@ -801,7 +807,7 @@ static void draw_title_bar(window_t* window) {
     
     // Close button
     if (!(window->style & WINDOW_STYLE_NOCLOSE)) {
-        fb_fill_rect(button_x, button_y, BUTTON_WIDTH, BUTTON_WIDTH, FB_COLOR_RED);
+        fb_draw_rectangle(button_x, button_y, BUTTON_WIDTH, BUTTON_WIDTH, FB_COLOR_RED, 1);
         // Draw X
         fb_draw_line(button_x + 3, button_y + 3, button_x + BUTTON_WIDTH - 3, button_y + BUTTON_WIDTH - 3, FB_COLOR_WHITE);
         fb_draw_line(button_x + BUTTON_WIDTH - 3, button_y + 3, button_x + 3, button_y + BUTTON_WIDTH - 3, FB_COLOR_WHITE);
@@ -810,21 +816,21 @@ static void draw_title_bar(window_t* window) {
     
     // Maximize button
     if (!(window->style & WINDOW_STYLE_NOMAXIMIZE)) {
-        fb_fill_rect(button_x, button_y, BUTTON_WIDTH, BUTTON_WIDTH, window->title_bg_color);
+        fb_draw_rectangle(button_x, button_y, BUTTON_WIDTH, BUTTON_WIDTH, window->title_bg_color, 1);
         if (window->state == WINDOW_STATE_MAXIMIZED) {
             // Draw restore icon (overlapping rectangles)
-            fb_draw_rect(button_x + 3, button_y + 5, BUTTON_WIDTH - 8, BUTTON_WIDTH - 8, window->title_fg_color);
-            fb_draw_rect(button_x + 5, button_y + 3, BUTTON_WIDTH - 8, BUTTON_WIDTH - 8, window->title_fg_color);
+            fb_draw_rectangle(button_x + 3, button_y + 5, BUTTON_WIDTH - 8, BUTTON_WIDTH - 8, window->title_fg_color, 0);
+            fb_draw_rectangle(button_x + 5, button_y + 3, BUTTON_WIDTH - 8, BUTTON_WIDTH - 8, window->title_fg_color, 0);
         } else {
             // Draw maximize icon (single rectangle)
-            fb_draw_rect(button_x + 3, button_y + 3, BUTTON_WIDTH - 6, BUTTON_WIDTH - 6, window->title_fg_color);
+            fb_draw_rectangle(button_x + 3, button_y + 3, BUTTON_WIDTH - 6, BUTTON_WIDTH - 6, window->title_fg_color, 0);
         }
         button_x -= BUTTON_WIDTH + 2;
     }
     
     // Minimize button
     if (!(window->style & WINDOW_STYLE_NOMINIMIZE)) {
-        fb_fill_rect(button_x, button_y, BUTTON_WIDTH, BUTTON_WIDTH, window->title_bg_color);
+        fb_draw_rectangle(button_x, button_y, BUTTON_WIDTH, BUTTON_WIDTH, window->title_bg_color, 1);
         fb_draw_line(button_x + 3, button_y + BUTTON_WIDTH - 3, button_x + BUTTON_WIDTH - 3, button_y + BUTTON_WIDTH - 3, window->title_fg_color);
     }
 }
@@ -841,17 +847,17 @@ static void draw_borders(window_t* window) {
     // Draw borders
     // Top border (already drawn if title bar exists)
     if (window->style & WINDOW_STYLE_NOTITLE) {
-        fb_fill_rect(x, y, width, BORDER_WIDTH, window->border_color);
+        fb_draw_rectangle(x, y, width, BORDER_WIDTH, window->border_color, 1);
     }
     
     // Bottom border
-    fb_fill_rect(x, y + height - BORDER_WIDTH, width, BORDER_WIDTH, window->border_color);
+    fb_draw_rectangle(x, y + height - BORDER_WIDTH, width, BORDER_WIDTH, window->border_color, 1);
     
     // Left border
-    fb_fill_rect(x, y, BORDER_WIDTH, height, window->border_color);
+    fb_draw_rectangle(x, y, BORDER_WIDTH, height, window->border_color, 1);
     
     // Right border
-    fb_fill_rect(x + width - BORDER_WIDTH, y, BORDER_WIDTH, height, window->border_color);
+    fb_draw_rectangle(x + width - BORDER_WIDTH, y, BORDER_WIDTH, height, window->border_color, 1);
 }
 
 // Draw the client area of a window
@@ -864,7 +870,7 @@ static void draw_client_area(window_t* window) {
     uint32_t client_height = window->client_height;
     
     // Fill client area with background color
-    fb_fill_rect(client_x, client_y, client_width, client_height, window->bg_color);
+    fb_draw_rectangle(client_x, client_y, client_width, client_height, window->bg_color, 1);
 }
 
 // Draw all controls in a window
@@ -879,7 +885,8 @@ static void draw_controls(window_t* window) {
         control = control->next;
     }
 }
-// Fixed function with void return type to match mouse_event_handler_t:
+
+// Handle mouse event
 static void handle_mouse_event(mouse_event_t* event) {
     if (!event) return;
     
@@ -891,7 +898,7 @@ static void handle_mouse_event(mouse_event_t* event) {
     int16_t dx = event->dx;
     int16_t dy = event->dy;
     
-    // Handle window dragging (don't propagate events during dragging)
+    // Handle window dragging
     if (drag_window) {
         if (!(buttons & MOUSE_BUTTON_LEFT)) {
             // Button released, end drag
@@ -1137,6 +1144,7 @@ static window_t* find_window_at(int16_t x, int16_t y) {
     
     return NULL;  // No window found at this position
 }
+
 // Find control at given client coordinates
 static window_control_t* find_control_at(window_t* window, uint32_t x, uint32_t y) {
     if (!window) return NULL;
@@ -1153,6 +1161,7 @@ static window_control_t* find_control_at(window_t* window, uint32_t x, uint32_t 
     
     return NULL;
 }
+
 // Check if point is in the title bar
 static int is_point_in_title_bar(window_t* window, int16_t x, int16_t y) {
     if (!window || (window->style & WINDOW_STYLE_NOTITLE)) return 0;
@@ -1306,6 +1315,7 @@ static int process_next_message(void) {
     
     return 1;  // Message processed
 }
+
 // Add a control to a window
 int window_add_control(window_t* window, window_control_t* control) {
     if (!window || !control) return 0;
@@ -1443,352 +1453,353 @@ static void control_draw(window_control_t* control) {
                 
                 // Draw checkmark if checked
                 if (control->control_data && *(uint8_t*)control->control_data) {
-					window_draw_line(control->parent, control->x + 2, control->y + 6, 
-						control->x + 5, control->y + 9, FB_COLOR_BLACK);
-					window_draw_line(control->parent, control->x + 5, control->y + 9, 
-									control->x + 10, control->y + 2, FB_COLOR_BLACK);
-				}
-				
-				// Draw label
-				if (control->control_data_extra) {
-					window_draw_text(control->parent, control->x + box_size + 5, control->y + 2, 
-									(const char*)control->control_data_extra, control->fg_color);
-				}
-			}
-			break;
-			
-			case CONTROL_TYPE_RADIO:
-			{
-				// Draw radio button
-				int radius = 6;
-				window_draw_circle(control->parent, control->x + radius, control->y + radius, 
-								radius, FB_COLOR_DARK_GRAY);
-				window_fill_circle(control->parent, control->x + radius, control->y + radius, 
-								radius - 1, FB_COLOR_WHITE);
-				
-				// Draw selected dot if checked
-				if (control->control_data && *(uint8_t*)control->control_data) {
-					window_fill_circle(control->parent, control->x + radius, control->y + radius, 
-									radius - 3, FB_COLOR_BLACK);
-				}
-				
-				// Draw label
-				if (control->control_data_extra) {
-					window_draw_text(control->parent, control->x + radius * 2 + 5, control->y + 2, 
-									(const char*)control->control_data_extra, control->fg_color);
-				}
-			}
-			break;
-			
-			case CONTROL_TYPE_LISTBOX:
-			// Draw listbox
-			window_fill_rect(control->parent, control->x, control->y, 
-							control->width, control->height, FB_COLOR_WHITE);
-			window_draw_rect(control->parent, control->x, control->y, 
-							control->width, control->height, FB_COLOR_DARK_GRAY);
-			
-			// Draw items if any
-			if (control->control_data) {
-				listbox_data_t* data = (listbox_data_t*)control->control_data;
-				
-				for (uint32_t i = 0; i < data->item_count && i < data->visible_items; i++) {
-					uint32_t item_y = control->y + 2 + i * 16;  // 16 pixels per item
-					
-					// Draw selection highlight
-					if (data->selected_index == data->first_visible_item + i) {
-						window_fill_rect(control->parent, control->x + 2, item_y, 
-										control->width - 4, 16, FB_COLOR_BLUE);
-						window_draw_text(control->parent, control->x + 4, item_y + 4, 
-										data->items[data->first_visible_item + i], FB_COLOR_WHITE);
-					} else {
-						window_draw_text(control->parent, control->x + 4, item_y + 4, 
-										data->items[data->first_visible_item + i], FB_COLOR_BLACK);
-					}
-				}
-			}
-			break;
-			
-			default:
-			// Unknown control type
-			break;
-			}
-			}
+                    window_draw_line(control->parent, control->x + 2, control->y + 6, 
+                                   control->x + 5, control->y + 9, FB_COLOR_BLACK);
+                    window_draw_line(control->parent, control->x + 5, control->y + 9, 
+                                   control->x + 10, control->y + 2, FB_COLOR_BLACK);
+                }
+                
+                // Draw label
+                if (control->control_data_extra) {
+                    window_draw_text(control->parent, control->x + box_size + 5, control->y + 2, 
+                                   (const char*)control->control_data_extra, control->fg_color);
+                }
+            }
+            break;
+            
+        case CONTROL_TYPE_RADIO:
+            {
+                // Draw radio button
+                int radius = 6;
+                window_draw_circle(control->parent, control->x + radius, control->y + radius, 
+                                radius, FB_COLOR_DARK_GRAY);
+                window_fill_circle(control->parent, control->x + radius, control->y + radius, 
+                                radius - 1, FB_COLOR_WHITE);
+                
+                // Draw selected dot if checked
+                if (control->control_data && *(uint8_t*)control->control_data) {
+                    window_fill_circle(control->parent, control->x + radius, control->y + radius, 
+                                    radius - 3, FB_COLOR_BLACK);
+                }
+                
+                // Draw label
+                if (control->control_data_extra) {
+                    window_draw_text(control->parent, control->x + radius * 2 + 5, control->y + 2, 
+                                   (const char*)control->control_data_extra, control->fg_color);
+                }
+            }
+            break;
+            
+        case CONTROL_TYPE_LISTBOX:
+            // Draw listbox
+            window_fill_rect(control->parent, control->x, control->y, 
+                            control->width, control->height, FB_COLOR_WHITE);
+            window_draw_rect(control->parent, control->x, control->y, 
+                            control->width, control->height, FB_COLOR_DARK_GRAY);
+            
+            // Draw items if any
+            if (control->control_data) {
+                listbox_data_t* data = (listbox_data_t*)control->control_data;
+                
+                for (uint32_t i = 0; i < data->item_count && i < data->visible_items; i++) {
+                    uint32_t item_y = control->y + 2 + i * 16;  // 16 pixels per item
+                    
+                    // Draw selection highlight
+                    if (data->selected_index == data->first_visible_item + i) {
+                        window_fill_rect(control->parent, control->x + 2, item_y, 
+                                        control->width - 4, 16, FB_COLOR_BLUE);
+                        window_draw_text(control->parent, control->x + 4, item_y + 4, 
+                                        data->items[data->first_visible_item + i], FB_COLOR_WHITE);
+                    } else {
+                        window_draw_text(control->parent, control->x + 4, item_y + 4, 
+                                        data->items[data->first_visible_item + i], FB_COLOR_BLACK);
+                    }
+                }
+            }
+            break;
+            
+        default:
+            // Unknown control type
+            break;
+    }
+}
 
-			// Create a label control
-			window_control_t* control_create_label(window_t* parent, uint32_t id, const char* text, 
-									uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
-			if (!parent) return NULL;
+// Create a label control
+window_control_t* control_create_label(window_t* parent, uint32_t id, const char* text, 
+                                       uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+    if (!parent) return NULL;
 
-			// Allocate control structure
-			window_control_t* control = kmalloc(sizeof(window_control_t));
-			if (!control) {
-			return NULL;
-			}
+    // Allocate control structure
+    window_control_t* control = kmalloc(sizeof(window_control_t));
+    if (!control) {
+        return NULL;
+    }
 
-			// Initialize control data
-			memset(control, 0, sizeof(window_control_t));
+    // Initialize control data
+    memset(control, 0, sizeof(window_control_t));
 
-			control->parent = parent;
-			control->id = id;
-			control->x = x;
-			control->y = y;
-			control->width = width;
-			control->height = height;
-			control->enabled = 1;
-			control->visible = 1;
-			control->focused = 0;
-			control->type = CONTROL_TYPE_LABEL;
-			control->next = NULL;
+    control->parent = parent;
+    control->id = id;
+    control->x = x;
+    control->y = y;
+    control->width = width;
+    control->height = height;
+    control->enabled = 1;
+    control->visible = 1;
+    control->focused = 0;
+    control->type = CONTROL_TYPE_LABEL;
+    control->next = NULL;
 
-			// Set default colors
-			control->bg_color = parent->bg_color;
-			control->fg_color = parent->fg_color;
-			control->border_color = parent->border_color;
+    // Set default colors
+    control->bg_color = parent->bg_color;
+    control->fg_color = parent->fg_color;
+    control->border_color = parent->border_color;
 
-			// Allocate memory for label text
-			control->control_data = kmalloc(MAX_WINDOW_TITLE);
-			if (control->control_data) {
-			strncpy((char*)control->control_data, text, MAX_WINDOW_TITLE - 1);
-			((char*)control->control_data)[MAX_WINDOW_TITLE - 1] = '\0';
-			}
+    // Allocate memory for label text
+    control->control_data = kmalloc(MAX_WINDOW_TITLE);
+    if (control->control_data) {
+        strncpy((char*)control->control_data, text, MAX_WINDOW_TITLE - 1);
+        ((char*)control->control_data)[MAX_WINDOW_TITLE - 1] = '\0';
+    }
 
-			// Add control to window
-			window_add_control(parent, control);
+    // Add control to window
+    window_add_control(parent, control);
 
-			// Draw the control
-			control_draw(control);
+    // Draw the control
+    control_draw(control);
 
-			return control;
-			}
+    return control;
+}
 
-			// Create a textbox control
-			window_control_t* control_create_textbox(window_t* parent, uint32_t id, const char* text, 
-										uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
-			if (!parent) return NULL;
+// Create a textbox control
+window_control_t* control_create_textbox(window_t* parent, uint32_t id, const char* text, 
+                                         uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+    if (!parent) return NULL;
 
-			// Allocate control structure
-			window_control_t* control = kmalloc(sizeof(window_control_t));
-			if (!control) {
-			return NULL;
-			}
+    // Allocate control structure
+    window_control_t* control = kmalloc(sizeof(window_control_t));
+    if (!control) {
+        return NULL;
+    }
 
-			// Initialize control data
-			memset(control, 0, sizeof(window_control_t));
+    // Initialize control data
+    memset(control, 0, sizeof(window_control_t));
 
-			control->parent = parent;
-			control->id = id;
-			control->x = x;
-			control->y = y;
-			control->width = width;
-			control->height = height;
-			control->enabled = 1;
-			control->visible = 1;
-			control->focused = 0;
-			control->type = CONTROL_TYPE_TEXTBOX;
-			control->next = NULL;
+    control->parent = parent;
+    control->id = id;
+    control->x = x;
+    control->y = y;
+    control->width = width;
+    control->height = height;
+    control->enabled = 1;
+    control->visible = 1;
+    control->focused = 0;
+    control->type = CONTROL_TYPE_TEXTBOX;
+    control->next = NULL;
 
-			// Set default colors
-			control->bg_color = FB_COLOR_WHITE;
-			control->fg_color = FB_COLOR_BLACK;
-			control->border_color = FB_COLOR_DARK_GRAY;
+    // Set default colors
+    control->bg_color = FB_COLOR_WHITE;
+    control->fg_color = FB_COLOR_BLACK;
+    control->border_color = FB_COLOR_DARK_GRAY;
 
-			// Allocate memory for textbox text
-			control->control_data = kmalloc(MAX_TEXTBOX_LENGTH);
-			if (control->control_data) {
-			if (text) {
-			strncpy((char*)control->control_data, text, MAX_TEXTBOX_LENGTH - 1);
-			((char*)control->control_data)[MAX_TEXTBOX_LENGTH - 1] = '\0';
-			} else {
-			((char*)control->control_data)[0] = '\0';
-			}
-			}
+    // Allocate memory for textbox text
+    control->control_data = kmalloc(MAX_TEXTBOX_LENGTH);
+    if (control->control_data) {
+        if (text) {
+            strncpy((char*)control->control_data, text, MAX_TEXTBOX_LENGTH - 1);
+            ((char*)control->control_data)[MAX_TEXTBOX_LENGTH - 1] = '\0';
+        } else {
+            ((char*)control->control_data)[0] = '\0';
+        }
+    }
 
-			// Add control to window
-			window_add_control(parent, control);
+    // Add control to window
+    window_add_control(parent, control);
 
-			// Draw the control
-			control_draw(control);
+    // Draw the control
+    control_draw(control);
 
-			return control;
-			}
+    return control;
+}
 
-			// Create a checkbox control
-			window_control_t* control_create_checkbox(window_t* parent, uint32_t id, const char* text, 
-										uint32_t x, uint32_t y, uint32_t width, uint32_t height, 
-										uint8_t checked) {
-			if (!parent) return NULL;
+// Create a checkbox control
+window_control_t* control_create_checkbox(window_t* parent, uint32_t id, const char* text, 
+                                          uint32_t x, uint32_t y, uint32_t width, uint32_t height, 
+                                          uint8_t checked) {
+    if (!parent) return NULL;
 
-			// Allocate control structure
-			window_control_t* control = kmalloc(sizeof(window_control_t));
-			if (!control) {
-			return NULL;
-			}
+    // Allocate control structure
+    window_control_t* control = kmalloc(sizeof(window_control_t));
+    if (!control) {
+        return NULL;
+    }
 
-			// Initialize control data
-			memset(control, 0, sizeof(window_control_t));
+    // Initialize control data
+    memset(control, 0, sizeof(window_control_t));
 
-			control->parent = parent;
-			control->id = id;
-			control->x = x;
-			control->y = y;
-			control->width = width;
-			control->height = height;
-			control->enabled = 1;
-			control->visible = 1;
-			control->focused = 0;
-			control->type = CONTROL_TYPE_CHECKBOX;
-			control->next = NULL;
+    control->parent = parent;
+    control->id = id;
+    control->x = x;
+    control->y = y;
+    control->width = width;
+    control->height = height;
+    control->enabled = 1;
+    control->visible = 1;
+    control->focused = 0;
+    control->type = CONTROL_TYPE_CHECKBOX;
+    control->next = NULL;
 
-			// Set default colors
-			control->bg_color = parent->bg_color;
-			control->fg_color = parent->fg_color;
-			control->border_color = parent->border_color;
+    // Set default colors
+    control->bg_color = parent->bg_color;
+    control->fg_color = parent->fg_color;
+    control->border_color = parent->border_color;
 
-			// Store checked state
-			control->control_data = kmalloc(1);
-			if (control->control_data) {
-			*(uint8_t*)control->control_data = checked;
-			}
+    // Store checked state
+    control->control_data = kmalloc(1);
+    if (control->control_data) {
+        *(uint8_t*)control->control_data = checked;
+    }
 
-			// Store label text
-			if (text) {
-			control->control_data_extra = kmalloc(MAX_WINDOW_TITLE);
-			if (control->control_data_extra) {
-			strncpy((char*)control->control_data_extra, text, MAX_WINDOW_TITLE - 1);
-			((char*)control->control_data_extra)[MAX_WINDOW_TITLE - 1] = '\0';
-			}
-			}
+    // Store label text
+    if (text) {
+        control->control_data_extra = kmalloc(MAX_WINDOW_TITLE);
+        if (control->control_data_extra) {
+            strncpy((char*)control->control_data_extra, text, MAX_WINDOW_TITLE - 1);
+            ((char*)control->control_data_extra)[MAX_WINDOW_TITLE - 1] = '\0';
+        }
+    }
 
-			// Add control to window
-			window_add_control(parent, control);
+    // Add control to window
+    window_add_control(parent, control);
 
-			// Draw the control
-			control_draw(control);
+    // Draw the control
+    control_draw(control);
 
-			return control;
-			}
+    return control;
+}
 
-			// Create a radio button control
-			window_control_t* control_create_radiobutton(window_t* parent, uint32_t id, const char* text, 
-											uint32_t x, uint32_t y, uint32_t width, uint32_t height, 
-											uint8_t checked) {
-			if (!parent) return NULL;
+// Create a radio button control
+window_control_t* control_create_radiobutton(window_t* parent, uint32_t id, const char* text, 
+                                             uint32_t x, uint32_t y, uint32_t width, uint32_t height, 
+                                             uint8_t checked) {
+    if (!parent) return NULL;
 
-			// Allocate control structure
-			window_control_t* control = kmalloc(sizeof(window_control_t));
-			if (!control) {
-			return NULL;
-			}
+    // Allocate control structure
+    window_control_t* control = kmalloc(sizeof(window_control_t));
+    if (!control) {
+        return NULL;
+    }
 
-			// Initialize control data
-			memset(control, 0, sizeof(window_control_t));
+    // Initialize control data
+    memset(control, 0, sizeof(window_control_t));
 
-			control->parent = parent;
-			control->id = id;
-			control->x = x;
-			control->y = y;
-			control->width = width;
-			control->height = height;
-			control->enabled = 1;
-			control->visible = 1;
-			control->focused = 0;
-			control->type = CONTROL_TYPE_RADIO;
-			control->next = NULL;
+    control->parent = parent;
+    control->id = id;
+    control->x = x;
+    control->y = y;
+    control->width = width;
+    control->height = height;
+    control->enabled = 1;
+    control->visible = 1;
+    control->focused = 0;
+    control->type = CONTROL_TYPE_RADIO;
+    control->next = NULL;
 
-			// Set default colors
-			control->bg_color = parent->bg_color;
-			control->fg_color = parent->fg_color;
-			control->border_color = parent->border_color;
+    // Set default colors
+    control->bg_color = parent->bg_color;
+    control->fg_color = parent->fg_color;
+    control->border_color = parent->border_color;
 
-			// Store checked state
-			control->control_data = kmalloc(1);
-			if (control->control_data) {
-			*(uint8_t*)control->control_data = checked;
+    // Store checked state
+    control->control_data = kmalloc(1);
+    if (control->control_data) {
+        *(uint8_t*)control->control_data = checked;
 
-			// Uncheck other radio buttons in the same group
-			if (checked) {
-			window_control_t* other = parent->controls;
-			while (other) {
-				if (other != control && other->type == CONTROL_TYPE_RADIO && 
-					other->group_id == control->group_id && other->control_data) {
-					*(uint8_t*)other->control_data = 0;
-					control_invalidate(other);
-				}
-				other = other->next;
-			}
-			}
-			}
+        // Uncheck other radio buttons in the same group
+        if (checked) {
+            window_control_t* other = parent->controls;
+            while (other) {
+                if (other != control && other->type == CONTROL_TYPE_RADIO && 
+                    other->group_id == control->group_id && other->control_data) {
+                    *(uint8_t*)other->control_data = 0;
+                    control_invalidate(other);
+                }
+                other = other->next;
+            }
+        }
+    }
 
-			// Store label text
-			if (text) {
-			control->control_data_extra = kmalloc(MAX_WINDOW_TITLE);
-			if (control->control_data_extra) {
-			strncpy((char*)control->control_data_extra, text, MAX_WINDOW_TITLE - 1);
-			((char*)control->control_data_extra)[MAX_WINDOW_TITLE - 1] = '\0';
-			}
-			}
+    // Store label text
+    if (text) {
+        control->control_data_extra = kmalloc(MAX_WINDOW_TITLE);
+        if (control->control_data_extra) {
+            strncpy((char*)control->control_data_extra, text, MAX_WINDOW_TITLE - 1);
+            ((char*)control->control_data_extra)[MAX_WINDOW_TITLE - 1] = '\0';
+        }
+    }
 
-			// Add control to window
-			window_add_control(parent, control);
+    // Add control to window
+    window_add_control(parent, control);
 
-			// Draw the control
-			control_draw(control);
+    // Draw the control
+    control_draw(control);
 
-			return control;
-			}
+    return control;
+}
 
-			// Create a listbox control
-			window_control_t* control_create_listbox(window_t* parent, uint32_t id, 
-										uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
-			if (!parent) return NULL;
+// Create a listbox control
+window_control_t* control_create_listbox(window_t* parent, uint32_t id, 
+                                         uint32_t x, uint32_t y, uint32_t width, uint32_t height) {
+    if (!parent) return NULL;
 
-			// Allocate control structure
-			window_control_t* control = kmalloc(sizeof(window_control_t));
-			if (!control) {
-			return NULL;
-			}
+    // Allocate control structure
+    window_control_t* control = kmalloc(sizeof(window_control_t));
+    if (!control) {
+        return NULL;
+    }
 
-			// Initialize control data
-			memset(control, 0, sizeof(window_control_t));
+    // Initialize control data
+    memset(control, 0, sizeof(window_control_t));
 
-			control->parent = parent;
-			control->id = id;
-			control->x = x;
-			control->y = y;
-			control->width = width;
-			control->height = height;
-			control->enabled = 1;
-			control->visible = 1;
-			control->focused = 0;
-			control->type = CONTROL_TYPE_LISTBOX;
-			control->next = NULL;
+    control->parent = parent;
+    control->id = id;
+    control->x = x;
+    control->y = y;
+    control->width = width;
+    control->height = height;
+    control->enabled = 1;
+    control->visible = 1;
+    control->focused = 0;
+    control->type = CONTROL_TYPE_LISTBOX;
+    control->next = NULL;
 
-			// Set default colors
-			control->bg_color = FB_COLOR_WHITE;
-			control->fg_color = FB_COLOR_BLACK;
-			control->border_color = FB_COLOR_DARK_GRAY;
+    // Set default colors
+    control->bg_color = FB_COLOR_WHITE;
+    control->fg_color = FB_COLOR_BLACK;
+    control->border_color = FB_COLOR_DARK_GRAY;
 
-			// Initialize listbox data
-			listbox_data_t* listbox_data = kmalloc(sizeof(listbox_data_t));
-			if (listbox_data) {
-			memset(listbox_data, 0, sizeof(listbox_data_t));
-			listbox_data->item_count = 0;
-			listbox_data->first_visible_item = 0;
-			listbox_data->selected_index = -1;
-			listbox_data->visible_items = (height - 4) / 16;  // 16 pixels per item
+    // Initialize listbox data
+    listbox_data_t* listbox_data = kmalloc(sizeof(listbox_data_t));
+    if (listbox_data) {
+        memset(listbox_data, 0, sizeof(listbox_data_t));
+        listbox_data->item_count = 0;
+        listbox_data->first_visible_item = 0;
+        listbox_data->selected_index = -1;
+        listbox_data->visible_items = (height - 4) / 16;  // 16 pixels per item
 
-			control->control_data = listbox_data;
-			}
+        control->control_data = listbox_data;
+    }
 
-			// Add control to window
-			window_add_control(parent, control);
+    // Add control to window
+    window_add_control(parent, control);
 
-			// Draw the control
-			control_draw(control);
+    // Draw the control
+    control_draw(control);
 
-			return control;
-			}
-			// Destroy a control
+    return control;
+}
+
+// Destroy a control
 void control_destroy(window_control_t* control) {
     if (!control) return;
     

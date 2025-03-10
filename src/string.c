@@ -74,7 +74,7 @@ void* memset(void* s, int c, size_t n) {
         p[i] = (unsigned char)c;
     return s;
 }
-// Compare n characters of two strings
+
 int strncmp(const char* s1, const char* s2, size_t n) {
     for (size_t i = 0; i < n; i++) {
         if (s1[i] != s2[i])
@@ -85,7 +85,6 @@ int strncmp(const char* s1, const char* s2, size_t n) {
     return 0;
 }
 
-// Add to string.c
 int atoi(const char* str) {
     int value = 0;
     int sign = 1;
@@ -111,7 +110,6 @@ int atoi(const char* str) {
     return value * sign;
 }
 
-// Find first occurrence of character c in string s
 char* strchr(const char* s, int c) {
     while (*s != '\0') {
         if (*s == (char)c)
@@ -124,7 +122,7 @@ char* strchr(const char* s, int c) {
     
     return NULL;
 }
-// Concatenate src to dest
+
 char* strcat(char* dest, const char* src) {
     char* original_dest = dest;
     
@@ -137,4 +135,21 @@ char* strcat(char* dest, const char* src) {
         ;
     
     return original_dest;
+}
+
+void* memmove(void* dest, const void* src, size_t n) {
+    char* d = dest;
+    const char* s = src;
+    if (d < s) {
+        // Copy forward if source is after destination
+        for (size_t i = 0; i < n; i++) {
+            d[i] = s[i];
+        }
+    } else {
+        // Copy backward if destination overlaps source
+        for (size_t i = n; i > 0; i--) {
+            d[i-1] = s[i-1];
+        }
+    }
+    return dest;
 }

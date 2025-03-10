@@ -115,7 +115,7 @@ void desktop_process_events(void) {
 // Update the desktop display
 void desktop_update(void) {
     // Clear screen with desktop background
-    fb_clear(desktop_bg_color);
+    fb_clear_screen(0x00000000);
     
     // Draw desktop elements
     draw_desktop();
@@ -166,11 +166,10 @@ void desktop_set_theme(uint32_t theme) {
     }
 }
 
-// Fix for desktop_run() function - removing incorrect return value
-void desktop_run(void) {
+int desktop_run(void) {
     if (desktop_init() != 0) {
         terminal_writestring("Failed to initialize desktop environment\n");
-        return;
+        return -1;
     }
     
     // Register the desktop mouse handler
@@ -203,7 +202,7 @@ void desktop_run(void) {
         // Small delay to reduce CPU usage
         hal_timer_delay(10); // Better than busy waiting
     }
-    // No return statement - void function
+    return 0;  // Unreachable, but included for completeness
 }
 // Draw the desktop background and elements
 static void draw_desktop(void) {
@@ -216,16 +215,15 @@ static void draw_desktop(void) {
     draw_taskbar();
 }
 
-// Draw the taskbar
 static void draw_taskbar(void) {
     fb_info_t info;
     fb_get_info(&info);
     
     // Draw taskbar background
-    fb_fill_rect(0, info.height - taskbar.height, info.width, taskbar.height, taskbar.color);
+    fb_draw_rectangle(0, info.height - taskbar.height, info.width, taskbar.height, taskbar.color, 1);
     
     // Draw start button
-    fb_fill_rect(5, info.height - taskbar.height + 5, TASKBAR_START_BUTTON_WIDTH, taskbar.height - 10, FB_COLOR_BLUE);
+    fb_draw_rectangle(5, info.height - taskbar.height + 5, TASKBAR_START_BUTTON_WIDTH, taskbar.height - 10, FB_COLOR_BLUE, 1);
     fb_draw_text(15, info.height - taskbar.height + 10, "Start", FB_COLOR_WHITE);
     
     // Draw clock
@@ -237,40 +235,39 @@ static void draw_taskbar(void) {
     
     if (file_browser_window && file_browser_window->visible) {
         uint32_t btn_color = (file_browser_window == active_window) ? 0xFF777777 : 0xFF555555;
-        fb_fill_rect(btn_x, info.height - taskbar.height + 5, TASKBAR_BUTTON_WIDTH, taskbar.height - 10, btn_color);
+        fb_draw_rectangle(btn_x, info.height - taskbar.height + 5, TASKBAR_BUTTON_WIDTH, taskbar.height - 10, btn_color, 1);
         fb_draw_text(btn_x + 5, info.height - taskbar.height + 10, "File Browser", taskbar.text_color);
         btn_x += TASKBAR_BUTTON_WIDTH + 5;
     }
     
     if (terminal_window && terminal_window->visible) {
         uint32_t btn_color = (terminal_window == active_window) ? 0xFF777777 : 0xFF555555;
-        fb_fill_rect(btn_x, info.height - taskbar.height + 5, TASKBAR_BUTTON_WIDTH, taskbar.height - 10, btn_color);
+        fb_draw_rectangle(btn_x, info.height - taskbar.height + 5, TASKBAR_BUTTON_WIDTH, taskbar.height - 10, btn_color, 1);
         fb_draw_text(btn_x + 5, info.height - taskbar.height + 10, "Terminal", taskbar.text_color);
         btn_x += TASKBAR_BUTTON_WIDTH + 5;
     }
     
     if (text_editor_window && text_editor_window->visible) {
         uint32_t btn_color = (text_editor_window == active_window) ? 0xFF777777 : 0xFF555555;
-        fb_fill_rect(btn_x, info.height - taskbar.height + 5, TASKBAR_BUTTON_WIDTH, taskbar.height - 10, btn_color);
+        fb_draw_rectangle(btn_x, info.height - taskbar.height + 5, TASKBAR_BUTTON_WIDTH, taskbar.height - 10, btn_color, 1);
         fb_draw_text(btn_x + 5, info.height - taskbar.height + 10, "Text Editor", taskbar.text_color);
         btn_x += TASKBAR_BUTTON_WIDTH + 5;
     }
     
     if (settings_window && settings_window->visible) {
         uint32_t btn_color = (settings_window == active_window) ? 0xFF777777 : 0xFF555555;
-        fb_fill_rect(btn_x, info.height - taskbar.height + 5, TASKBAR_BUTTON_WIDTH, taskbar.height - 10, btn_color);
+        fb_draw_rectangle(btn_x, info.height - taskbar.height + 5, TASKBAR_BUTTON_WIDTH, taskbar.height - 10, btn_color, 1);
         fb_draw_text(btn_x + 5, info.height - taskbar.height + 10, "Settings", taskbar.text_color);
     }
 }
 
-// Draw desktop icons
 static void draw_icons(void) {
     for (uint32_t i = 0; i < icon_count; i++) {
         desktop_icon_t* icon = &desktop_icons[i];
         
         // Draw icon background
-        fb_fill_rect(icon->x, icon->y, icon->width, icon->height, icon->icon_color);
-        fb_draw_rect(icon->x, icon->y, icon->width, icon->height, FB_COLOR_WHITE);
+        fb_draw_rectangle(icon->x, icon->y, icon->width, icon->height, icon->icon_color, 1);
+        fb_draw_rectangle(icon->x, icon->y, icon->width, icon->height, FB_COLOR_WHITE, 0);
         
         // Draw icon name
         uint32_t text_width = strlen(icon->name) * 8;  // Assuming 8 pixel wide font

@@ -3,50 +3,131 @@
 #include "terminal.h"
 #include "string.h"
 
+// Serial debug function declarations
+void serial_print(const char* str);
+#define SERIAL_DEBUG(msg) serial_print(msg)
+
+// Function to print hex values for debugging
+void print_hex(unsigned int num) {
+    static const char hex_chars[] = "0123456789ABCDEF";
+    char output[11]; // 0x + 8 digits + null terminator
+    
+    output[0] = '0';
+    output[1] = 'x';
+    
+    for (int i = 0; i < 8; i++) {
+        output[2 + i] = hex_chars[(num >> (28 - i * 4)) & 0xF];
+    }
+    
+    output[10] = '\0';
+    serial_print(output);
+}
+
+// Note: The following declarations should ideally be in hal.h to ensure proper linkage
+// across all files that use these functions (e.g., kernel.c).
+void outb(unsigned short port, unsigned char value);
+unsigned char inb(unsigned short port);
+int hal_framebuffer_is_ready(void);
+int hal_is_system_stable(void);
+
 // Device registry
 #define MAX_DEVICES 16
 static hal_device_t* devices[MAX_DEVICES] = {0};
 static int num_devices = 0;
 
 // HAL initialization
-void hal_init(void) {
+int hal_init(void) {
+    SERIAL_DEBUG("Starting HAL initialization...\n");
     terminal_writestring("Initializing Hardware Abstraction Layer (HAL)\n");
     
     // Clear device registry
+    SERIAL_DEBUG("Clearing device registry...\n");
     for (int i = 0; i < MAX_DEVICES; i++) {
         devices[i] = 0;
     }
     
     num_devices = 0;
     
+    SERIAL_DEBUG("HAL base initialization complete\n");
     terminal_writestring("HAL initialized in polling mode\n");
+    return 0;  // Success
+}
+
+// Port I/O functions
+void outb(unsigned short port, unsigned char value) {
+    asm volatile("outb %0, %1" : : "a"(value), "Nd"(port));
+}
+
+unsigned char inb(unsigned short port) {
+    unsigned char value;
+    asm volatile("inb %1, %0" : "=a"(value) : "Nd"(port));
+    return value;
+}
+
+// Stub functions (to be replaced with actual implementations)
+int hal_framebuffer_is_ready(void) {
+    SERIAL_DEBUG("Checking framebuffer readiness...\n");
+    // Stub: Replace with actual framebuffer readiness check
+    return 1;  // Assume ready for now
+}
+
+int hal_is_system_stable(void) {
+    // Stub: Replace with actual system stability check
+    return 1;  // Assume stable for now
 }
 
 // Register a device with HAL
 int hal_register_device(hal_device_t* device) {
-    if (!device || num_devices >= MAX_DEVICES) {
-        return -1; // Invalid device or registry full
+    SERIAL_DEBUG("Registering device: ");
+    print_hex((unsigned int)device);
+    SERIAL_DEBUG("\n");
+    
+    if (!device) {
+        SERIAL_DEBUG("ERROR: Null device pointer!\n");
+        return -1;
+    }
+    
+    if (num_devices >= MAX_DEVICES) {
+        SERIAL_DEBUG("ERROR: Device registry full!\n");
+        return -1;
     }
     
     // Add device to registry
     devices[num_devices++] = device;
+    SERIAL_DEBUG("Device added to registry at index: ");
+    print_hex(num_devices - 1);
+    SERIAL_DEBUG("\n");
     
     // Initialize the device
     if (device->init) {
-        return device->init(device);
+        SERIAL_DEBUG("Calling device init function\n");
+        int result = device->init(device);
+        SERIAL_DEBUG("Device init returned: ");
+        print_hex(result);
+        SERIAL_DEBUG("\n");
+        return result;
     }
     
+    SERIAL_DEBUG("Device has no init function\n");
     return 0;
 }
 
 // Get a device by type
 hal_device_t* hal_get_device(uint32_t type) {
+    SERIAL_DEBUG("Looking for device type: ");
+    print_hex(type);
+    SERIAL_DEBUG("\n");
+    
     for (int i = 0; i < num_devices; i++) {
         if (devices[i] && devices[i]->type == type) {
+            SERIAL_DEBUG("Device found at index: ");
+            print_hex(i);
+            SERIAL_DEBUG("\n");
             return devices[i];
         }
     }
     
+    SERIAL_DEBUG("Device not found\n");
     return 0; // Device not found
 }
 
@@ -59,41 +140,62 @@ extern int hal_mouse_init(void);
 // Initialize all HAL devices
 int hal_init_devices(void) {
     int status = 0;
+    SERIAL_DEBUG("Starting HAL device initialization...\n");
     
     // Initialize framebuffer first (needed for GUI)
-    status = hal_framebuffer_init();
-    if (status != 0) {
+    SERIAL_DEBUG("Initializing framebuffer...\n");
+    struct hal_device_t* fb_device = framebuffer_init();
+    if (fb_device == NULL) {
+        SERIAL_DEBUG("Failed to initialize framebuffer\n");
         terminal_writestring("Failed to initialize HAL framebuffer device\n");
-        return status;
+        return -1;  // Or another appropriate error code
     }
+    SERIAL_DEBUG("Framebuffer initialized successfully\n");
+    SERIAL_DEBUG("Framebuffer initialized successfully\n");
     
     // Initialize mouse (needed for GUI interaction)
+    SERIAL_DEBUG("Initializing mouse...\n");
     status = hal_mouse_init();
     if (status != 0) {
+        SERIAL_DEBUG("Failed to initialize mouse, status: ");
+        print_hex(status);
+        SERIAL_DEBUG("\n");
         terminal_writestring("Failed to initialize HAL mouse device\n");
         // Continue even if mouse fails - GUI might still work with keyboard only
+    } else {
+        SERIAL_DEBUG("Mouse initialized successfully\n");
     }
     
     // Initialize timer
+    SERIAL_DEBUG("Initializing timer...\n");
     status = hal_timer_init();
     if (status != 0) {
+        SERIAL_DEBUG("Failed to initialize timer, status: ");
+        print_hex(status);
+        SERIAL_DEBUG("\n");
         terminal_writestring("Failed to initialize HAL timer device\n");
         return status;
     }
+    SERIAL_DEBUG("Timer initialized successfully\n");
     
     // Initialize keyboard
+    SERIAL_DEBUG("Initializing keyboard...\n");
     status = hal_keyboard_init();
     if (status != 0) {
+        SERIAL_DEBUG("Failed to initialize keyboard, status: ");
+        print_hex(status);
+        SERIAL_DEBUG("\n");
         terminal_writestring("Failed to initialize HAL keyboard device\n");
         return status;
     }
+    SERIAL_DEBUG("Keyboard initialized successfully\n");
     
+    SERIAL_DEBUG("All HAL devices initialized successfully\n");
     terminal_writestring("All HAL devices initialized successfully\n");
     return 0;
 }
 
 // Generic device operations wrapper functions
-
 int hal_device_read(hal_device_t* device, void* buffer, uint32_t size) {
     if (!device || !device->read) {
         return -1;

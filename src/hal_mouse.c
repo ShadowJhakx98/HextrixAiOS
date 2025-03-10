@@ -1,7 +1,6 @@
 // src/hal_mouse.c
 #include "hal_mouse.h"
 #include "hal.h"  // Added to get hal_device_t definition
-#include "io.h"
 #include "terminal.h"
 #include "stdio.h"
 

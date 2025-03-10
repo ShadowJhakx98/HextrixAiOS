@@ -1,4 +1,5 @@
 // src/kernel.c
+#include <stdbool.h>
 #include "terminal.h"
 #include "kmalloc.h"
 #include "interrupts.h"
@@ -7,150 +8,224 @@
 #include "process.h"
 #include "scheduler.h"
 #include "memory.h"
-#include "stdio.h"  // Added for terminal_printf
-#include "system_utils.h" // Added for system_halt
-#include "hal.h" // Added for HAL functions
-#include "gui/desktop.h" // Add this at the top of the file
+#include "stdio.h"
+#include "system_utils.h"
+#include "hal.h"
+#include "gui/desktop.h"
 
-// Demo task 1
-static void demo_task1(void) {
-    while (1) {
-        terminal_writestring("Task 1 running\n");
-        
-        // Simulate some work
-        for (volatile int i = 0; i < 10000000; i++) {}
-        
-        // Yield to other processes
-        scheduler_yield();
+// Function declarations with correct return types
+void serial_print(const char *str);
+void fallback_shell_loop(void);
+static void print_hex(unsigned int num);
+
+// Debug macro for serial output
+#define SERIAL_DEBUG(msg) serial_print(msg)
+
+// Serial debugging initialization
+void serial_init() {
+    // Initialize COM1 serial port (0x3F8)
+    outb(0x3F8 + 1, 0x00);    // Disable interrupts
+    outb(0x3F8 + 3, 0x80);    // Enable DLAB (Divisor Latch Access Bit)
+    outb(0x3F8 + 0, 0x03);    // Set divisor to 3 (38400 baud)
+    outb(0x3F8 + 1, 0x00);    // High byte of divisor
+    outb(0x3F8 + 3, 0x03);    // 8 bits, no parity, one stop bit
+    outb(0x3F8 + 2, 0xC7);    // Enable FIFO, clear them, 14-byte threshold
+}
+
+// Serial print function
+void serial_print(const char* str) {
+    while (*str) {
+        // Wait for the transmit buffer to be empty
+        while (!(inb(0x3F8 + 5) & 0x20));
+        outb(0x3F8, *str++);
     }
 }
 
-// Demo task 2
-static void demo_task2(void) {
+// Helper function to print hex values
+static void print_hex(unsigned int num) {
+    static const char hex_chars[] = "0123456789ABCDEF";
+    char output[11]; // 0x + 8 digits + null terminator
+    
+    output[0] = '0';
+    output[1] = 'x';
+    
+    for (int i = 0; i < 8; i++) {
+        output[2 + i] = hex_chars[(num >> (28 - i * 4)) & 0xF];
+    }
+    
+    output[10] = '\0';
+    serial_print(output);
+}
+
+// Safe GUI initialization wrapper
+bool safe_desktop_init() {
+    SERIAL_DEBUG("Attempting GUI initialization...\n");
+    
+    // Check framebuffer readiness
+    if (!hal_framebuffer_is_ready()) {
+        SERIAL_DEBUG("Framebuffer not ready. GUI initialization failed.\n");
+        return false;
+    }
+    SERIAL_DEBUG("Framebuffer is ready for GUI initialization.\n");
+    
+    // Try to run desktop and check result
+    SERIAL_DEBUG("Calling desktop_run()...\n");
+    int gui_result = desktop_run();
+    SERIAL_DEBUG("desktop_run() returned: ");
+    print_hex(gui_result);
+    SERIAL_DEBUG("\n");
+    
+    if (gui_result != 0) {
+        SERIAL_DEBUG("Desktop initialization failed with error code.\n");
+        return false;
+    }
+    
+    SERIAL_DEBUG("GUI initialized successfully.\n");
+    return true;
+}
+
+// Fallback shell loop with safety checks
+void fallback_shell_loop() {
+    SERIAL_DEBUG("Entering fallback shell loop...\n");
+    
     while (1) {
-        terminal_writestring("Task 2 running\n");
+        // Perform safety checks
+        if (!hal_is_system_stable()) {
+            SERIAL_DEBUG("System instability detected. Halting.\n");
+            system_halt();
+        }
         
-        // Simulate some work
-        for (volatile int i = 0; i < 15000000; i++) {}
-        
-        // Yield to other processes
-        scheduler_yield();
-    }
-}
-
-// Shell task
-static void shell_task(void) {
-    shell_init();
-    shell_run();
-    
-    // Should never return, but if it does:
-    terminal_writestring("Shell exited. System halted.\n");
-    while (1) {
-        scheduler_yield();
-    }
-}
-
-// Memory test function
-void test_memory_protection(void) {
-    terminal_writestring("Testing memory protection...\n");
-    
-    // Test valid memory access
-    uint32_t* valid_ptr = (uint32_t*)(0x100000); // 1MB (heap start)
-    if (is_valid_access((uint32_t)valid_ptr, MEM_PROT_READ | MEM_PROT_WRITE)) {
-        terminal_writestring("Valid heap access check passed\n");
-        *valid_ptr = 0x12345678; // This should work
-        terminal_printf("Value at 0x%x: 0x%x\n", valid_ptr, *valid_ptr);
-    } else {
-        terminal_writestring("ERROR: Valid heap access check failed\n");
-    }
-    
-    // Test invalid memory access (would cause a page fault if we enable the handler)
-    uint32_t* invalid_ptr = (uint32_t*)(0x10000000); // 256MB (unmapped)
-    if (!is_valid_access((uint32_t)invalid_ptr, MEM_PROT_READ)) {
-        terminal_writestring("Invalid memory access check passed\n");
-    } else {
-        terminal_writestring("ERROR: Invalid memory access check failed\n");
-    }
-    
-    // Test memory protection on valid address
-    uint32_t* kernel_ptr = (uint32_t*)(0x500); // Kernel space
-    if (!is_valid_access((uint32_t)kernel_ptr, MEM_PROT_WRITE | MEM_PROT_USER)) {
-        terminal_writestring("Kernel memory protection check passed (user cannot write to kernel space)\n");
-    } else {
-        terminal_writestring("ERROR: Kernel memory protection check failed (user can write to kernel space)\n");
-    }
-    
-    terminal_writestring("Memory protection test complete\n");
-}
-
-// Need to declare this function if it's not exposed in scheduler.h
-extern void scheduler_timer_tick(void);
-
-void kernel_main(unsigned int magic, unsigned int addr) {
-    // Initialize terminal
-    terminal_initialize();
-    
-    // Print welcome message
-    terminal_writestring("Initializing Hextrix OS (32-bit) v0.4.0-beta - GUI Edition\n");
-    
-    // Check multiboot magic
-    if (magic != 0x2BADB002) {
-        terminal_writestring("Invalid multiboot magic number!\n");
-    } else {
-        terminal_writestring("Multiboot OK\n");
-    }
-    
-    // Initialize memory management
-    kmalloc_init();
-    terminal_writestring("Memory management initialized\n");
-    
-    // Initialize paging with memory protection
-    init_paging();
-    terminal_writestring("Paging initialized\n");
-    
-    // Memory protection is disabled by default for stability
-    terminal_writestring("Memory protection is available but disabled by default\n");
-    terminal_writestring("Use 'memenable' command to enable it when ready\n");
-    
-    // Initialize HAL
-    hal_init();
-    hal_init_devices();
-    terminal_writestring("Hardware Abstraction Layer initialized\n");
-    
-    // Register timer callback for scheduler
-    hal_timer_register_callback(scheduler_timer_tick);
-    
-    // Initialize file system
-    fs_init();
-    terminal_writestring("File system initialized\n");
-    
-    // Initialize process management
-    process_init();
-    scheduler_init();
-    terminal_writestring("Process scheduler initialized\n");
-    
-    // Launch the desktop GUI
-    terminal_writestring("Starting GUI desktop environment...\n");
-    desktop_run();
-    
-    // If desktop_run() ever returns, fall back to the shell
-    terminal_writestring("GUI desktop exited. Falling back to shell.\n");
-    shell_init();
-    
-    // Main loop (fallback if GUI fails)
-    while (1) {
-        // Poll the timer
+        // Poll timer to keep system responsive
         hal_timer_poll();
         
-        // Poll keyboard and handle input
-        hal_keyboard_poll();
-        
+        // Keyboard handling with error checking
         if (hal_keyboard_is_key_available()) {
             int scancode = hal_keyboard_read();
+            if (scancode == -1) {
+                SERIAL_DEBUG("Keyboard read error.\n");
+                continue;
+            }
+            
+            // Handle key in shell
             shell_handle_key(scancode);
         }
         
-        // Short delay to reduce CPU usage in emulator
-        for (volatile int i = 0; i < 10000; i++) {}
+        // Yield to prevent tight looping
+        scheduler_yield();
     }
+}
+
+// Enhanced kernel main with robust error handling
+void kernel_main(unsigned int magic, unsigned int addr) {
+    // Early serial debugging initialization
+    serial_init();
+    SERIAL_DEBUG("Hextrix OS Booting...\n");
+    
+    // Initialize terminal
+    terminal_initialize();
+    SERIAL_DEBUG("Terminal initialized.\n");
+    
+    // Multiboot validation with detailed logging
+    if (magic != 0x2BADB000) {
+        SERIAL_DEBUG("CRITICAL: Invalid multiboot magic number!\n");
+        terminal_writestring("Invalid multiboot magic number!\n");
+        system_halt();
+    }
+    SERIAL_DEBUG("Multiboot validation passed.\n");
+    
+    // Memory management initialization with error checking
+    if (kmalloc_init() != 0) {
+        SERIAL_DEBUG("CRITICAL: Memory management initialization failed!\n");
+        terminal_writestring("Memory initialization failed!\n");
+        system_halt();
+    }
+    SERIAL_DEBUG("Memory management initialized.\n");
+    
+    // Paging initialization with error handling
+    if (init_paging() != 0) {
+        SERIAL_DEBUG("CRITICAL: Paging initialization failed!\n");
+        terminal_writestring("Paging initialization failed!\n");
+        system_halt();
+    }
+    SERIAL_DEBUG("Paging initialized.\n");
+    
+    // HAL initialization with comprehensive checks
+    SERIAL_DEBUG("Starting HAL initialization...\n");
+    int hal_result = hal_init();
+    if (hal_result != 0) {
+        SERIAL_DEBUG("CRITICAL: HAL core initialization failed with code: ");
+        print_hex(hal_result);
+        SERIAL_DEBUG("\n");
+        terminal_writestring("HAL initialization failed!\n");
+        system_halt();
+    }
+    SERIAL_DEBUG("HAL core initialized successfully.\n");
+    
+    SERIAL_DEBUG("Starting HAL device initialization...\n");
+    int hal_devices_result = hal_init_devices();
+    if (hal_devices_result != 0) {
+        SERIAL_DEBUG("CRITICAL: HAL device initialization failed with code: ");
+        print_hex(hal_devices_result);
+        SERIAL_DEBUG("\n");
+        terminal_writestring("HAL device initialization failed!\n");
+        system_halt();
+    }
+    SERIAL_DEBUG("Hardware Abstraction Layer fully initialized.\n");
+    
+    // Timer and scheduler setup
+    SERIAL_DEBUG("Registering scheduler timer callback...\n");
+    hal_timer_register_callback(scheduler_timer_tick);
+    SERIAL_DEBUG("Timer callback registered.\n");
+    
+    // File system initialization
+    SERIAL_DEBUG("Starting filesystem initialization...\n");
+    int fs_result = fs_init();
+    SERIAL_DEBUG("Filesystem initialization result: ");
+    print_hex(fs_result);
+    SERIAL_DEBUG("\n");
+    
+    if (fs_result != 0) {
+        SERIAL_DEBUG("WARNING: File system initialization failed.\n");
+        // Continue boot, but log the issue
+    } else {
+        SERIAL_DEBUG("Filesystem initialized successfully.\n");
+    }
+    
+    // Process and scheduler initialization
+    SERIAL_DEBUG("Starting process initialization...\n");
+    process_init();
+    SERIAL_DEBUG("Process initialization complete.\n");
+    
+    SERIAL_DEBUG("Starting scheduler initialization...\n");
+    scheduler_init();
+    SERIAL_DEBUG("Scheduler initialization complete.\n");
+    SERIAL_DEBUG("Process scheduler initialized.\n");
+    
+    // Attempt GUI initialization
+    SERIAL_DEBUG("About to attempt GUI desktop initialization...\n");
+    bool gui_success = safe_desktop_init();
+    SERIAL_DEBUG("GUI initialization attempt completed with result: ");
+    SERIAL_DEBUG(gui_success ? "SUCCESS" : "FAILURE");
+    SERIAL_DEBUG("\n");
+    
+    if (!gui_success) {
+        SERIAL_DEBUG("GUI initialization failed. Falling back to shell.\n");
+        terminal_writestring("GUI failed to start. Entering fallback shell.\n");
+        
+        // Fallback to shell with safety mechanisms
+        SERIAL_DEBUG("Initializing fallback shell...\n");
+        shell_init();
+        SERIAL_DEBUG("Shell initialized, entering shell loop...\n");
+        fallback_shell_loop();
+    } else {
+        SERIAL_DEBUG("GUI initialization succeeded, system should now be in GUI mode.\n");
+        // If we reach here with successful GUI but nothing happens, we might have a loop issue
+        SERIAL_DEBUG("WARNING: Control returned from GUI but GUI was successful. This indicates a potential issue.\n");
+    }
+    
+    // Final safety net (should never reach here)
+    SERIAL_DEBUG("Unexpected kernel exit. Entering fallback shell.\n");
+    terminal_writestring("Unexpected system state. Entering fallback shell.\n");
+    shell_init();
+    fallback_shell_loop();
 }

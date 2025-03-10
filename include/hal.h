@@ -1,13 +1,18 @@
-// include/hal.h
 #ifndef HAL_H
 #define HAL_H
+
+void outb(unsigned short port, unsigned char value);
+unsigned char inb(unsigned short port);
+int hal_framebuffer_is_ready(void);
+int hal_is_system_stable(void);
+
 
 #include <stdint.h>
 #include "hal_framebuffer.h"  // Include this first to get fb_info_t definition
 #include "hal_mouse.h"
 
 // HAL initialization
-void hal_init(void);
+int hal_init(void);
 int hal_init_devices(void);
 
 // HAL device types
@@ -23,13 +28,10 @@ int hal_init_devices(void);
 #define HAL_MODE_POLLING    0
 #define HAL_MODE_INTERRUPT  1
 
-// Generic HAL device structure
-typedef struct {
-    uint32_t type;         // Device type
-    uint32_t mode;         // Operation mode
-    void* private_data;    // Device-specific data
-    
-    // Common methods
+typedef struct hal_device_t {
+    uint32_t type;
+    uint32_t mode;
+    void* private_data;
     int (*init)(void* device);
     int (*close)(void* device);
     int (*read)(void* device, void* buffer, uint32_t size);
@@ -76,16 +78,15 @@ void hal_display_status_bar(const char* left_text, const char* center_text,
 // HAL framebuffer device functions
 int hal_framebuffer_init(void);
 void fb_draw_pixel(uint32_t x, uint32_t y, uint32_t color);
-void fb_draw_line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color);
-void fb_draw_rect(uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint32_t color);
-void fb_fill_rect(uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint32_t color);
-void fb_draw_circle(uint32_t x0, uint32_t y0, uint32_t radius, uint32_t color);
+void fb_draw_circle(uint32_t center_x, uint32_t center_y, uint32_t radius, uint32_t color, int filled);
+void fb_draw_rect(uint32_t x, uint32_t y, uint32_t width, uint32_t height, uint32_t color); // Already present
+void fb_draw_line(uint32_t x1, uint32_t y1, uint32_t x2, uint32_t y2, uint32_t color); // Already present
 void fb_fill_circle(uint32_t x0, uint32_t y0, uint32_t radius, uint32_t color);
 void fb_draw_text(uint32_t x, uint32_t y, const char* text, uint32_t color);
 void fb_clear(uint32_t color);
 void fb_swap_buffers(void);
 void fb_set_double_buffering(uint8_t enable);
-void fb_get_info(fb_info_t* info);
+int fb_get_info(fb_info_t* info);
 void fb_set_resolution(uint32_t width, uint32_t height, uint8_t bits_per_pixel);
 
 // HAL storage device functions

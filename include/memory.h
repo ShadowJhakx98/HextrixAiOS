@@ -20,7 +20,7 @@
 #define MEM_REGION_USER    2
 
 // Function declarations
-void init_paging(void);
+int init_paging(void);
 int map_page(uint32_t physical_addr, uint32_t virtual_addr, uint32_t flags);
 int unmap_page(uint32_t virtual_addr);
 int protect_page(uint32_t virtual_addr, uint32_t flags);

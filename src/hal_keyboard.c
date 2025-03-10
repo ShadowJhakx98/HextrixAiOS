@@ -1,6 +1,5 @@
 // src/hal_keyboard.c
 #include "hal.h"
-#include "io.h"
 #include "terminal.h"
 
 // Keyboard device private data

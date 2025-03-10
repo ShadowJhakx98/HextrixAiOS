@@ -51,7 +51,7 @@ static int fs_flush_cache_block(int block_index);
 static int fs_flush_all_cache(void);
 
 // Initialize file system
-void fs_init(void) {
+int fs_init(void) {
     // Clear all nodes
     for (int i = 0; i < FS_MAX_FILES; i++) {
         fs_nodes[i].in_use = 0;
@@ -83,6 +83,7 @@ void fs_init(void) {
     fs_stats.dir_operations = 0;
     
     terminal_writestring("File system initialized\n");
+    return 0;  // Success
 }
 
 // Get current working directory

@@ -934,7 +934,7 @@ static int cmd_sleep(int argc, char** argv) {
 }
 
 static int cmd_version(int argc, char** argv) {
-    terminal_writestring("Hextrix OS v0.3.7-dev-v2 - HAL Edition\n");
+    terminal_writestring("Hextrix OS v0.4.0-beta - HAL Edition\n");
     terminal_writestring("Copyright (c) 2025 Jared Edwards - The Hextrix AI Project\n");
     terminal_writestring("Enhanced Shell with command history and tab completion\n");
     return 0;
@@ -1002,7 +1002,7 @@ static int cmd_diag(int argc, char** argv) {
     
     // System information
     terminal_writestring("\n=== System Information ===\n");
-    terminal_writestring("Hextrix OS v0.3.7-dev-v2 - HAL Edition\n");
+    terminal_writestring("Hextrix OS v4.0-beta - HAL Edition\n");
     
     // Memory information
     terminal_writestring("\n=== Memory Information ===\n");
@@ -1327,7 +1327,7 @@ static int cmd_help(int argc, char** argv) {
         terminal_writestring("No help available for '");
         terminal_writestring(argv[1]);
         terminal_writestring("'\n");
-        return 1;
+        return 1;  // Indicate failure (command not found)
     }
     
     // General help - list all commands

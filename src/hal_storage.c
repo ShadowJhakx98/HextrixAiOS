@@ -4,7 +4,6 @@
 #include "stdio.h"
 #include "kmalloc.h"
 #include "string.h"
-#include "io.h"
 #include <stdint.h>
 
 // Storage types

@@ -27,7 +27,7 @@ typedef struct {
 } fs_node_t;
 
 // Initialize file system
-void fs_init(void);
+int fs_init(void);
 
 // Create a new file
 int fs_create(const char* path, int type);
