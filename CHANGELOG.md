@@ -7,7 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 # Hextrix OS - Changelog
 
-## Version 0.4.1-beta (Current - In Progress)
+## Version 0.4.2-beta (Current - March 10, 2025)
+- Successfully implemented graphics display in QEMU:
+  - Enhanced VGA Mode 13h initialization with complete register programming
+  - Fixed framebuffer rendering to properly display desktop environment
+  - Resolved color mapping issues between 32-bit RGB and 8-bit VGA palette
+  - Implemented proper graphics mode switching from text mode
+  - Added test pattern verification to confirm graphics mode
+- GUI now renders correctly:
+  - Desktop with blue/cyan background displays properly
+  - Desktop icons appear at the top of the screen
+  - Taskbar renders at the bottom
+  - Welcome window appears and can be interacted with
+- Performance improvements:
+  - Increased main event loop delay for better rendering in QEMU
+  - Optimized screen clearing and redrawing logic
+  - Reduced debugging output that was interfering with display
+- Fixed critical graphical subsystem bugs:
+  - Resolved framebuffer initialization issues
+  - Fixed color mapping discrepancies
+  - Enhanced VGA register programming
+  - Corrected window drawing functions
+- Enhanced debugging capabilities:
+  - Added test pattern for graphics mode verification
+  - Improved serial debugging output for graphics subsystem
+
+## Version 0.4.1-beta
 - Fixed critical compilation errors in HAL and GUI subsystems:
   - Resolved undefined references in hal_framebuffer.c and hal_mouse.c
   - Implemented missing functions (find_window_at, find_control_at, abs)
